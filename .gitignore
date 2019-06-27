@@ -35,3 +35,4 @@
 build/x64
 *.opendb
 *.db
+*.suo

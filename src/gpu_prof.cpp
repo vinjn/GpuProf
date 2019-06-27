@@ -35,6 +35,11 @@
 
 #pragma comment(lib, "UxTheme")
 #pragma comment(lib, "dwrite")
+#pragma comment(lib, "d2d1")
+#pragma comment(lib, "Kernel32")
+#pragma comment(lib, "windowscodecs")
+#pragma comment(lib, "comctl32")
+
 
 // Application entry point
 int main(int argc, char* argv[])
