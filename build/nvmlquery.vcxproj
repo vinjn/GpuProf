@@ -135,12 +135,112 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="../src/nvmlquery.cpp" />
-  </ItemGroup>
-  <ItemGroup>
+    <ClInclude Include="..\3rdparty\libui\common\attrstr.h" />
+    <ClInclude Include="..\3rdparty\libui\common\controlsigs.h" />
+    <ClInclude Include="..\3rdparty\libui\common\table.h" />
+    <ClInclude Include="..\3rdparty\libui\common\uipriv.h" />
+    <ClInclude Include="..\3rdparty\libui\common\utf.h" />
+    <ClInclude Include="..\3rdparty\libui\ui.h" />
+    <ClInclude Include="..\3rdparty\libui\ui_windows.h" />
+    <ClInclude Include="..\3rdparty\libui\windows\area.hpp" />
+    <ClInclude Include="..\3rdparty\libui\windows\attrstr.hpp" />
+    <ClInclude Include="..\3rdparty\libui\windows\compilerver.hpp" />
+    <ClInclude Include="..\3rdparty\libui\windows\draw.hpp" />
+    <ClInclude Include="..\3rdparty\libui\windows\resources.hpp" />
+    <ClInclude Include="..\3rdparty\libui\windows\table.hpp" />
+    <ClInclude Include="..\3rdparty\libui\windows\uipriv_windows.hpp" />
+    <ClInclude Include="..\3rdparty\libui\windows\winapi.hpp" />
+    <ClInclude Include="..\3rdparty\libui\windows\_uipriv_migrate.hpp" />
     <ClInclude Include="..\src\amd_prof.h" />
     <ClInclude Include="..\src\intel_prof.h" />
     <ClInclude Include="..\src\nvidia_prof.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\3rdparty\libui\common\areaevents.c" />
+    <ClCompile Include="..\3rdparty\libui\common\attribute.c" />
+    <ClCompile Include="..\3rdparty\libui\common\attrlist.c" />
+    <ClCompile Include="..\3rdparty\libui\common\attrstr.c" />
+    <ClCompile Include="..\3rdparty\libui\common\control.c" />
+    <ClCompile Include="..\3rdparty\libui\common\debug.c" />
+    <ClCompile Include="..\3rdparty\libui\common\matrix.c" />
+    <ClCompile Include="..\3rdparty\libui\common\opentype.c" />
+    <ClCompile Include="..\3rdparty\libui\common\shouldquit.c" />
+    <ClCompile Include="..\3rdparty\libui\common\tablemodel.c" />
+    <ClCompile Include="..\3rdparty\libui\common\tablevalue.c" />
+    <ClCompile Include="..\3rdparty\libui\common\userbugs.c" />
+    <ClCompile Include="..\3rdparty\libui\common\utf.c" />
+    <ClCompile Include="..\3rdparty\libui\windows\alloc.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\area.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\areadraw.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\areaevents.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\areascroll.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\areautil.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\attrstr.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\box.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\button.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\checkbox.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\colorbutton.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\colordialog.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\combobox.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\container.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\control.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\d2dscratch.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\datetimepicker.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\debug.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\draw.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\drawmatrix.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\drawpath.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\drawtext.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\dwrite.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\editablecombo.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\entry.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\events.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\fontbutton.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\fontdialog.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\fontmatch.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\form.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\graphemes.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\grid.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\group.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\image.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\init.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\label.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\main.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\menu.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\multilineentry.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\opentype.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\parent.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\progressbar.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\radiobuttons.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\separator.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\sizing.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\slider.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\spinbox.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\stddialogs.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\tab.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\table.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\tabledispinfo.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\tabledraw.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\tableediting.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\tablemetrics.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\tabpage.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\text.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\utf16.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\utilwin.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\window.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\winpublic.cpp" />
+    <ClCompile Include="..\3rdparty\libui\windows\winutil.cpp" />
+    <ClCompile Include="..\src\gpu_prof.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="..\3rdparty\libui\windows\libui.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\3rdparty\libui\windows\meson.build" />
+    <None Include="..\3rdparty\libui\windows\notes" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\3rdparty\libui\windows\resources.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
