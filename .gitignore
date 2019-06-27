@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+
+build/x64
+*.opendb
+*.db
