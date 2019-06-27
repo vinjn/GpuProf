@@ -33,54 +33,19 @@
 
 #include "../3rdparty/libui/ui.h"
 
-#pragma comment(lib, "UxTheme")
-#pragma comment(lib, "dwrite")
-#pragma comment(lib, "d2d1")
-#pragma comment(lib, "Kernel32")
-#pragma comment(lib, "windowscodecs")
-#pragma comment(lib, "comctl32")
-
-
 // Application entry point
 int main(int argc, char* argv[])
 {
 	int iRetValue = -1 ;
 	nvmlReturn_t nvRetValue = NVML_ERROR_UNINITIALIZED ;
 
-	// Load the NVML DLL using the default NVML DLL install path
-	// NOTE: This DLL is included in the NVIDIA driver installation by default
-	HINSTANCE hDLLhandle = NULL ;
-	hDLLhandle = LoadLibrary(NVMLQUERY_DEFAULT_NVML_DLL_PATH) ;
-
-	// if the DLL can not be found, exit
-	if (NULL == hDLLhandle)
-	{
-		printf("NVML DLL is not installed or not found at the default path.\r\n") ;
-		return iRetValue ;
-	}
-
-	// Get the function pointers from the DLL
-    pfn_nvmlInit = (PFNnvmlInit)GetProcAddress(hDLLhandle, "nvmlInit") ;   
-    pfn_nvmlShutdown = (PFNnvmlShutdown)GetProcAddress(hDLLhandle, "nvmlShutdown") ;   
-	pfn_nvmlErrorString = (PFNnvmlErrorString)GetProcAddress(hDLLhandle,  "nvmlErrorString") ;
-	pfn_nvmlDeviceGetCount = (PFNnvmlDeviceGetCount)GetProcAddress(hDLLhandle, "nvmlDeviceGetCount") ;    
-	pfn_nvmlDeviceGetHandleByIndex = (PFNnvmlDeviceGetHandleByIndex)GetProcAddress(hDLLhandle, "nvmlDeviceGetHandleByIndex") ;
-	pfn_nvmlDeviceGetName = (PFNnvmlDeviceGetName)GetProcAddress(hDLLhandle, "nvmlDeviceGetName") ;
-	pfn_nvmlDeviceGetUtilizationRates = (PFNnvmlDeviceGetUtilizationRates)GetProcAddress(hDLLhandle, "nvmlDeviceGetUtilizationRates") ;
-	pfn_nvmlDeviceGetEncoderUtilization = (PFNnvmlDeviceGetEncoderUtilization)GetProcAddress(hDLLhandle, "nvmlDeviceGetEncoderUtilization") ;
-	pfn_nvmlDeviceGetDecoderUtilization = (PFNnvmlDeviceGetDecoderUtilization)GetProcAddress(hDLLhandle, "nvmlDeviceGetDecoderUtilization") ;
-	pfn_nvmlDeviceGetMemoryInfo = (PFNnvmlDeviceGetMemoryInfo)GetProcAddress(hDLLhandle, "nvmlDeviceGetMemoryInfo") ;
-	
-
 	// Before any of the NVML functions can be used nvmlInit() must be called
-	nvRetValue = pfn_nvmlInit() ;
+	nvRetValue = nvmlInit() ;
 
 	if (NVML_SUCCESS != nvRetValue)
 	{
 		// Can not call the NVML specific error string handler if the initialization failed
 		printf ("[%s] error code :%d\r\n", "nvmlInit", nvRetValue) ;
-		FreeLibrary(hDLLhandle) ;
-		hDLLhandle = NULL ;
 		return iRetValue ;
 	}
 
@@ -91,14 +56,12 @@ int main(int argc, char* argv[])
 
 	// Get the number of GPUs
 	unsigned int uiNumGPUs = 0 ;
-	nvRetValue = pfn_nvmlDeviceGetCount(&uiNumGPUs) ;
+	nvRetValue = nvmlDeviceGetCount(&uiNumGPUs) ;
 
 	if (NVML_SUCCESS != nvRetValue)
 	{
 		ShowErrorDetails(nvRetValue, "nvmlDeviceGetCount") ;
-		pfn_nvmlShutdown() ;
-		FreeLibrary(hDLLhandle) ;
-		hDLLhandle = NULL ;
+		nvmlShutdown() ;
 		return iRetValue ;
 	}
 
@@ -106,9 +69,7 @@ int main(int argc, char* argv[])
 	if (0 == uiNumGPUs)
 	{
 		printf("No NVIDIA GPUs were detected.\r\n") ;
-		pfn_nvmlShutdown() ;
-		FreeLibrary(hDLLhandle) ;
-		hDLLhandle = NULL ;
+		nvmlShutdown() ;
 		return iRetValue ;
 	}
 
@@ -128,33 +89,29 @@ int main(int argc, char* argv[])
 		{
 			// Get the GPU device handle
 			nvmlDevice_t nvGPUDeviceHandle = NULL;
-			nvRetValue = pfn_nvmlDeviceGetHandleByIndex(iDevIDX, &nvGPUDeviceHandle);
+			nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &nvGPUDeviceHandle);
 
 			if (NVML_SUCCESS != nvRetValue)
 			{
 				ShowErrorDetails(nvRetValue, "nvmlDeviceGetHandleByIndex");
-				pfn_nvmlShutdown();
-				FreeLibrary(hDLLhandle);
-				hDLLhandle = NULL;
+				nvmlShutdown();
 				return iRetValue;
 			}
 
 			// Get the device name
 			char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
-			nvRetValue = pfn_nvmlDeviceGetName(nvGPUDeviceHandle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
+			nvRetValue = nvmlDeviceGetName(nvGPUDeviceHandle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
 
 			if (NVML_SUCCESS != nvRetValue)
 			{
 				ShowErrorDetails(nvRetValue, "nvmlDeviceGetName");
-				pfn_nvmlShutdown();
-				FreeLibrary(hDLLhandle);
-				hDLLhandle = NULL;
+				nvmlShutdown();
 				return iRetValue;
 			}
 
 			// NOTE: nvUtil.memory is the memory controller utilization not the frame buffer utilization
 			nvmlUtilization_t nvUtilData;
-			nvRetValue = pfn_nvmlDeviceGetUtilizationRates(nvGPUDeviceHandle, &nvUtilData);
+			nvRetValue = nvmlDeviceGetUtilizationRates(nvGPUDeviceHandle, &nvUtilData);
 			if (NVML_SUCCESS != nvRetValue)
 			{
 				// Where the GPU utilization is not supported, the query will return an "Not Supported", handle it and continue
@@ -165,9 +122,7 @@ int main(int argc, char* argv[])
 				else
 				{
 					ShowErrorDetails(nvRetValue, "nvmlDeviceGetUtilizationRates");
-					pfn_nvmlShutdown();
-					FreeLibrary(hDLLhandle);
-					hDLLhandle = NULL;
+					nvmlShutdown();
 					return iRetValue;
 				}
 			}
@@ -175,13 +130,11 @@ int main(int argc, char* argv[])
 			// Get the GPU frame buffer memory information
 			nvmlMemory_t GPUmemoryInfo;
 			ZeroMemory(&GPUmemoryInfo, sizeof(GPUmemoryInfo));
-			nvRetValue = pfn_nvmlDeviceGetMemoryInfo(nvGPUDeviceHandle, &GPUmemoryInfo);
+			nvRetValue = nvmlDeviceGetMemoryInfo(nvGPUDeviceHandle, &GPUmemoryInfo);
 			if (NVML_SUCCESS != nvRetValue)
 			{
 				ShowErrorDetails(nvRetValue, "nvmlDeviceGetMemoryInfo");
-				pfn_nvmlShutdown();
-				FreeLibrary(hDLLhandle);
-				hDLLhandle = NULL;
+				nvmlShutdown();
 				return iRetValue;
 			}
 
@@ -196,9 +149,7 @@ int main(int argc, char* argv[])
 			if (ULLONG_MAX < GPUmemoryInfo.total)
 			{
 				printf("ERROR: GPU memory size exceeds variable limit\r\n");
-				pfn_nvmlShutdown();
-				FreeLibrary(hDLLhandle);
-				hDLLhandle = NULL;
+				nvmlShutdown();
 				return iRetValue;
 			}
 
@@ -212,7 +163,7 @@ int main(int argc, char* argv[])
 			// Get the video encoder utilization (where supported)
 			unsigned int uiVidEncoderUtil = 0u;
 			unsigned int uiVideEncoderLastSample = 0u;
-			nvRetValue = pfn_nvmlDeviceGetEncoderUtilization(nvGPUDeviceHandle, &uiVidEncoderUtil, &uiVideEncoderLastSample);
+			nvRetValue = nvmlDeviceGetEncoderUtilization(nvGPUDeviceHandle, &uiVidEncoderUtil, &uiVideEncoderLastSample);
 			if (NVML_SUCCESS != nvRetValue)
 			{
 				// Where the video encoder utilization is not supported, the query will return an "Not Supported", handle it and continue
@@ -223,9 +174,7 @@ int main(int argc, char* argv[])
 				else
 				{
 					ShowErrorDetails(nvRetValue, "nvmlDeviceGetEncoderUtilization");
-					pfn_nvmlShutdown();
-					FreeLibrary(hDLLhandle);
-					hDLLhandle = NULL;
+					nvmlShutdown();
 					return iRetValue;
 				}
 			}
@@ -233,7 +182,7 @@ int main(int argc, char* argv[])
 			// Get the video decoder utilization (where supported)
 			unsigned int uiVidDecoderUtil = 0u;
 			unsigned int uiVidDecoderLastSample = 0u;
-			nvRetValue = pfn_nvmlDeviceGetDecoderUtilization(nvGPUDeviceHandle, &uiVidDecoderUtil, &uiVidDecoderLastSample);
+			nvRetValue = nvmlDeviceGetDecoderUtilization(nvGPUDeviceHandle, &uiVidDecoderUtil, &uiVidDecoderLastSample);
 			if (NVML_SUCCESS != nvRetValue)
 			{
 				// Where the video decoder utilization is not supported, the query will return an "Not Supported", handle it and continue
@@ -244,9 +193,7 @@ int main(int argc, char* argv[])
 				else
 				{
 					ShowErrorDetails(nvRetValue, "nvmlDeviceGetDecoderUtilization");
-					pfn_nvmlShutdown();
-					FreeLibrary(hDLLhandle);
-					hDLLhandle = NULL;
+					nvmlShutdown();
 					return iRetValue;
 				}
 			}
@@ -280,15 +227,13 @@ int main(int argc, char* argv[])
 	}
 
 	// Shutdown NVML
-	nvRetValue = pfn_nvmlShutdown() ;
+	nvRetValue = nvmlShutdown() ;
 	if (NVML_SUCCESS != nvRetValue)
 	{
 		ShowErrorDetails(nvRetValue,  "nvmlShutdown") ;
 	}
 
 	// release the DLL handle
-	FreeLibrary(hDLLhandle) ;
-	hDLLhandle = NULL ;
 	return iRetValue ;
 
 	iRetValue = (NVML_SUCCESS == nvRetValue) ? 0 : -1 ;  
