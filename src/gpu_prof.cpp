@@ -24,7 +24,6 @@
 
 // nvmlquery.cpp : Demonstrate how to load the NVML API and query GPU utilization metrics
 
-#include <Windows.h>
 #include <stdio.h>
 
 #include "nvidia_prof.h"
@@ -32,6 +31,32 @@
 #include "amd_prof.h"
 
 #include "../3rdparty/libui/ui.h"
+
+#ifdef WIN32
+#include <Windows.h>
+void GoToXY(int column, int line)
+{
+    // Create a COORD structure and fill in its members.
+    // This specifies the new position of the cursor that we will set.
+    COORD coord;
+    coord.X = column;
+    coord.Y = line;
+
+    // Obtain a handle to the console screen buffer.
+    // (You're just using the standard console, so you can use STD_OUTPUT_HANDLE
+    // in conjunction with the GetStdHandle() to retrieve the handle.)
+    // Note that because it is a standard handle, we don't need to close it.
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    // Finally, call the SetConsoleCursorPosition function.
+    if (!SetConsoleCursorPosition(hConsole, coord))
+    {
+        // Uh-oh! The function call failed, so you need to handle the error.
+        // You can call GetLastError() to get a more specific error code.
+        // ...
+    }
+}
+#endif
 
 // Application entry point
 int main(int argc, char* argv[])
@@ -79,7 +104,7 @@ int main(int argc, char* argv[])
 	bool bDecoderUtilSupported = true ;
 
 	// Print out a header for the utilization output
-	printf("Device #, Name, GPU(%%), Frame Buffer(%%), Video Encode(%%), Video Decode(%%)\r\n") ;
+	printf("#\tGPU(%%)\tFB(%%)\tENC(%%)\tDEC(%%)\tName\r\n") ;
 
 	bool running = true;
 	while (running)
@@ -87,6 +112,7 @@ int main(int argc, char* argv[])
 		// Iterate through all of the GPUs
 		for (unsigned int iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
 		{
+            GoToXY(0, iDevIDX + 1);
 			// Get the GPU device handle
 			nvmlDevice_t nvGPUDeviceHandle = NULL;
 			nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &nvGPUDeviceHandle);
@@ -205,22 +231,22 @@ int main(int argc, char* argv[])
 			{
 				if (!bGPUUtilSupported)
 				{
-					printf("Device %d, %s, -, %.0f, -, -\r\n", iDevIDX, cDevicename, dMemUtilzation);
+					printf("%d\t-\t%.0f\t-\t-\t%s\r\n", iDevIDX, dMemUtilzation, cDevicename);
 				}
 				else
 				{
-					printf("Device %d, %s, %d, %.0f, -, -\r\n", iDevIDX, cDevicename, nvUtilData.gpu, dMemUtilzation);
+					printf("%d\t\t%d\t%.0f\t%s\t-\t-\r\n", iDevIDX, nvUtilData.gpu, dMemUtilzation, cDevicename);
 				}
 			}
 			else
 			{
 				if (!bGPUUtilSupported)
 				{
-					printf("Device %d, %s, -, %.0f, %d, %d\r\n", iDevIDX, cDevicename, dMemUtilzation, uiVidEncoderUtil, uiVidDecoderUtil);
+					printf("%d\t\t-\t%.0f\t%d\t%d\t%s\r\n", iDevIDX, dMemUtilzation, uiVidEncoderUtil, uiVidDecoderUtil, cDevicename);
 				}
 				else
 				{
-					printf("Device %d, %s, %d, %.0f, %d, %d\r\n", iDevIDX, cDevicename, nvUtilData.gpu, dMemUtilzation, uiVidEncoderUtil, uiVidDecoderUtil);
+					printf("%d\t%d\t%.0f\t%d\t%d\t%s\r\n", iDevIDX, nvUtilData.gpu, dMemUtilzation, uiVidEncoderUtil, uiVidDecoderUtil, cDevicename);
 				}
 			}
 		}
