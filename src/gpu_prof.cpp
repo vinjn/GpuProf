@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
 	bool bDecoderUtilSupported = true ;
 
 	// Print out a header for the utilization output
-	printf("#\tGPU(%%)\tFB(%%)\tENC(%%)\tDEC(%%)\tName\r\n") ;
+	printf("#\tGPU(%%)\tMEM(%%)\tNVENC(%%)\tNVDEC(%%)\tName\r\n") ;
 
 	bool running = true;
 	while (running)
