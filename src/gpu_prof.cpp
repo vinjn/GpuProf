@@ -221,13 +221,7 @@ int main(int argc, char* argv[])
 
     // Shutdown NVML
     nvRetValue = nvmlShutdown();
-    if (NVML_SUCCESS != nvRetValue)
-    {
-        ShowErrorDetails(nvRetValue, "nvmlShutdown");
-    }
-
-    // release the DLL handle
-    return iRetValue;
+    CHECK_NVML(nvRetValue, nvmlShutdown);
 
     iRetValue = (NVML_SUCCESS == nvRetValue) ? 0 : -1;
     return iRetValue;
