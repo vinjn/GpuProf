@@ -113,8 +113,8 @@ int main(int argc, char* argv[])
     bool bDecoderUtilSupported = true;
 
     // Print out a header for the utilization output
-    printf("GPU\tSM\tMEM\tENC\tDEC\tName\n");
-    printf("#idx\t%%\t%%\t%%\t%%\t\n");
+    printf("GPU\tSM\tRW\tMEM\tENC\tDEC\tName\n");
+    printf("#idx\t%%\t%%\t%%\t%%\t%%\t\n");
 
     bool running = true;
     while (running)
@@ -185,65 +185,34 @@ int main(int argc, char* argv[])
             unsigned int uiVidEncoderUtil = 0u;
             unsigned int uiVideEncoderLastSample = 0u;
             nvRetValue = nvmlDeviceGetEncoderUtilization(nvGPUDeviceHandle, &uiVidEncoderUtil, &uiVideEncoderLastSample);
-            if (NVML_SUCCESS != nvRetValue)
+            if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
-                // Where the video encoder utilization is not supported, the query will return an "Not Supported", handle it and continue
-                if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
-                {
-                    bEncoderUtilSupported = false;
-                }
-                else
-                {
-                    ShowErrorDetails(nvRetValue, "nvmlDeviceGetEncoderUtilization");
-                    nvmlShutdown();
-                    return iRetValue;
-                }
+                bEncoderUtilSupported = false;
             }
+            else CHECK_NVML(nvRetValue, nvmlDeviceGetEncoderUtilization);
 
             // Get the video decoder utilization (where supported)
             unsigned int uiVidDecoderUtil = 0u;
             unsigned int uiVidDecoderLastSample = 0u;
             nvRetValue = nvmlDeviceGetDecoderUtilization(nvGPUDeviceHandle, &uiVidDecoderUtil, &uiVidDecoderLastSample);
-            if (NVML_SUCCESS != nvRetValue)
+            if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
-                // Where the video decoder utilization is not supported, the query will return an "Not Supported", handle it and continue
-                if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
-                {
-                    bDecoderUtilSupported = false;
-                }
-                else
-                {
-                    ShowErrorDetails(nvRetValue, "nvmlDeviceGetDecoderUtilization");
-                    nvmlShutdown();
-                    return iRetValue;
-                }
+                bDecoderUtilSupported = false;
             }
+            else CHECK_NVML(nvRetValue, nvmlDeviceGetEncoderUtilization);
 
             // Output the utilization results depending on which of the counters has data available
             // I have opted to display "-" to denote an unsupported value rather than simply display "0"
             // to clarify that the GPU/driver does not support the query. 
-            if (!bEncoderUtilSupported || !bDecoderUtilSupported)
-            {
-                if (!bGPUUtilSupported)
-                {
-                    printf("%d\t-\t%.0f\t-\t-\t%s\n", iDevIDX, dMemUtilzation, cDevicename);
-                }
-                else
-                {
-                    printf("%d\t\t%d\t%.0f\t%s\t-\t-\n", iDevIDX, nvUtilData.gpu, dMemUtilzation, cDevicename);
-                }
-            }
-            else
-            {
-                if (!bGPUUtilSupported)
-                {
-                    printf("%d\t\t-\t%.0f\t%d\t%d\t%s\n", iDevIDX, dMemUtilzation, uiVidEncoderUtil, uiVidDecoderUtil, cDevicename);
-                }
-                else
-                {
-                    printf("%d\t%d\t%.0f\t%d\t%d\t%s\n", iDevIDX, nvUtilData.gpu, dMemUtilzation, uiVidEncoderUtil, uiVidDecoderUtil, cDevicename);
-                }
-            }
+            printf("%d", iDevIDX);
+            if (bGPUUtilSupported) printf("\t%d\t%d", nvUtilData.gpu, nvUtilData.memory);
+            else printf("\t-\t-");
+            printf("\t%.0f", dMemUtilzation);
+            if (bEncoderUtilSupported) printf("\t%d", uiVidEncoderUtil);
+            else printf("\t-");
+            if (bDecoderUtilSupported) printf("\t%d", uiVidDecoderUtil);
+            else printf("\t-");
+            printf("\t%s\n", cDevicename);
         }
     }
 
