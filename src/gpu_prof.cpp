@@ -113,8 +113,8 @@ int main(int argc, char* argv[])
     bool bDecoderUtilSupported = true;
 
     // Print out a header for the utilization output
-    printf("GPU\tSM\tRW\tMEM\tENC\tDEC\tName\n");
-    printf("#idx\t%%\t%%\t%%\t%%\t%%\t\n");
+    printf("GPU\tSM\tMEM-RW\tFRAMEBUFFER\tGFX-CLK\tSM-CLK\tMEM-CLK\tPCIE-W\tPCIE-R\tNAME\n");
+    printf("#id\t%%\t%%\tUsed / Full\tHz\tHz\tHz\tMB\tMB\t\n");
 
     bool running = true;
     while (running)
@@ -126,32 +126,21 @@ int main(int argc, char* argv[])
             // Get the GPU device handle
             nvmlDevice_t nvGPUDeviceHandle = NULL;
             nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &nvGPUDeviceHandle);
-
             CHECK_NVML(nvRetValue, nvmlDeviceGetHandleByIndex);
 
             // Get the device name
             char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
             nvRetValue = nvmlDeviceGetName(nvGPUDeviceHandle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
-
             CHECK_NVML(nvRetValue, nvmlDeviceGetName);
 
             // NOTE: nvUtil.memory is the memory controller utilization not the frame buffer utilization
             nvmlUtilization_t nvUtilData;
             nvRetValue = nvmlDeviceGetUtilizationRates(nvGPUDeviceHandle, &nvUtilData);
-            if (NVML_SUCCESS != nvRetValue)
+            if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
-                // Where the GPU utilization is not supported, the query will return an "Not Supported", handle it and continue
-                if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
-                {
-                    bGPUUtilSupported = false;
-                }
-                else
-                {
-                    ShowErrorDetails(nvRetValue, "nvmlDeviceGetUtilizationRates");
-                    nvmlShutdown();
-                    return iRetValue;
-                }
+                bGPUUtilSupported = false;
             }
+            else CHECK_NVML(nvRetValue, nvmlDeviceGetUtilizationRates);
 
             // Get the GPU frame buffer memory information
             nvmlMemory_t GPUmemoryInfo;
@@ -159,14 +148,7 @@ int main(int argc, char* argv[])
             nvRetValue = nvmlDeviceGetMemoryInfo(nvGPUDeviceHandle, &GPUmemoryInfo);
             CHECK_NVML(nvRetValue, nvmlDeviceGetMemoryInfo);
 
-            // compute the amount of frame buffer memory that has been used
-            unsigned long long ullFrameBufferUsedBytes = 0L;
-            ullFrameBufferUsedBytes = GPUmemoryInfo.total - GPUmemoryInfo.free;
-
-            unsigned long long ulFrameBufferTotalKBytes = 0L;
-            unsigned long long ulFrameBufferUsedKBytes = 0L;
-
-            // verify that the unsigned long long to unsigned long cast will not result in lost data
+            // verify that the uint64_t to unsigned long cast will not result in lost data
             if (ULLONG_MAX < GPUmemoryInfo.total)
             {
                 printf("ERROR: GPU memory size exceeds variable limit\n");
@@ -175,11 +157,11 @@ int main(int argc, char* argv[])
             }
 
             // convert the frame buffer value to KBytes
-            ulFrameBufferTotalKBytes = (unsigned long long)(GPUmemoryInfo.total / 1024L);
-            ulFrameBufferUsedKBytes = (unsigned long long)(ulFrameBufferTotalKBytes - (GPUmemoryInfo.free / 1024L));
+            uint64_t ulFrameBufferTotalMBytes = (uint64_t)(GPUmemoryInfo.total / 1024L / 1024L);
+            uint64_t ulFrameBufferUsedMBytes = (uint64_t)(ulFrameBufferTotalMBytes - (GPUmemoryInfo.free / 1024L / 1024L));
 
             // calculate the frame buffer memory utilization
-            double dMemUtilzation = (((double)ulFrameBufferUsedKBytes / (double)ulFrameBufferTotalKBytes) * 100.0);
+            double dMemUtilzation = (((double)ulFrameBufferUsedMBytes / (double)ulFrameBufferTotalMBytes) * 100.0);
 
             // Get the video encoder utilization (where supported)
             unsigned int uiVidEncoderUtil = 0u;
@@ -201,17 +183,38 @@ int main(int argc, char* argv[])
             }
             else CHECK_NVML(nvRetValue, nvmlDeviceGetEncoderUtilization);
 
+            // Clock
+            uint32_t clocks[NVML_CLOCK_COUNT];
+            for (int i = 0; i < NVML_CLOCK_COUNT; i++)
+            {
+                nvRetValue = nvmlDeviceGetClockInfo(nvGPUDeviceHandle, nvmlClockType_t(i), clocks + i);
+                CHECK_NVML(nvRetValue, nvmlDeviceGetClockInfo);
+            }
+
+            // pcie traffic
+            uint32_t pcieUtils[NVML_PCIE_UTIL_COUNT];
+            for (int i = 0; i < NVML_PCIE_UTIL_COUNT; i++)
+            {
+                nvRetValue = nvmlDeviceGetPcieThroughput(nvGPUDeviceHandle, nvmlPcieUtilCounter_t(i), pcieUtils + i);
+                CHECK_NVML(nvRetValue, nvmlDeviceGetPcieThroughput);
+            }
+
             // Output the utilization results depending on which of the counters has data available
             // I have opted to display "-" to denote an unsupported value rather than simply display "0"
             // to clarify that the GPU/driver does not support the query. 
             printf("%d", iDevIDX);
             if (bGPUUtilSupported) printf("\t%d\t%d", nvUtilData.gpu, nvUtilData.memory);
             else printf("\t-\t-");
-            printf("\t%.0f", dMemUtilzation);
+            printf("\t%lld / %lld", ulFrameBufferUsedMBytes, ulFrameBufferTotalMBytes);
+            printf("\t%d\t%d\t%d", clocks[NVML_CLOCK_GRAPHICS], clocks[NVML_CLOCK_SM], clocks[NVML_CLOCK_MEM]);
+            printf("\t%-3d\t%-3d", pcieUtils[NVML_PCIE_UTIL_TX_BYTES] / 1024L, pcieUtils[NVML_PCIE_UTIL_RX_BYTES] / 1024L);
+
+#if 0
             if (bEncoderUtilSupported) printf("\t%d", uiVidEncoderUtil);
             else printf("\t-");
             if (bDecoderUtilSupported) printf("\t%d", uiVidDecoderUtil);
             else printf("\t-");
+#endif
             printf("\t%s\n", cDevicename);
         }
     }
