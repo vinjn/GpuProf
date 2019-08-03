@@ -88,9 +88,13 @@ int main(int argc, char* argv[])
 
     // For each of the GPUs detected by NVML, query the device name, GPU, GPU memory, video encoder and decoder utilization
 
+    int cudaDriverVersion = 0;
+    nvRetValue = nvmlSystemGetCudaDriverVersion(&cudaDriverVersion);
+
     // Get the number of GPUs
     unsigned int uiNumGPUs = 0;
     nvRetValue = nvmlDeviceGetCount(&uiNumGPUs);
+    CHECK_NVML(nvRetValue, nvmlDeviceGetCount);
 
     if (NVML_SUCCESS != nvRetValue)
     {
@@ -113,8 +117,8 @@ int main(int argc, char* argv[])
     bool bDecoderUtilSupported = true;
 
     // Print out a header for the utilization output
-    printf("GPU\tSM\tMEM-RW\tFRAMEBUFFER\tGFX-CLK\tSM-CLK\tMEM-CLK\tPCIE-W\tPCIE-R\tNAME\n");
-    printf("#id\t%%\t%%\tUsed / Full(MB)\tHz\tHz\tHz\tMB\tMB\t\n");
+    printf("GPU\tMODE\tSM%%\tMEM%%\tFBuffer(GB)\tPCIE-W\tPCIE-R\tNAME\n");
+    printf("#id\t\t\t\tUsed / All\tMB\tMB\t\t\n");
 
     bool running = true;
     while (running)
@@ -132,6 +136,11 @@ int main(int argc, char* argv[])
             char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
             nvRetValue = nvmlDeviceGetName(nvGPUDeviceHandle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
             CHECK_NVML(nvRetValue, nvmlDeviceGetName);
+
+            // 
+            nvmlDriverModel_t driverModel, pendingDriverModel;
+            nvRetValue = nvmlDeviceGetDriverModel(nvGPUDeviceHandle, &driverModel, &pendingDriverModel);
+            CHECK_NVML(nvRetValue, nvmlDeviceGetDriverModel);
 
             // NOTE: nvUtil.memory is the memory controller utilization not the frame buffer utilization
             nvmlUtilization_t nvUtilData;
@@ -203,10 +212,12 @@ int main(int argc, char* argv[])
             // I have opted to display "-" to denote an unsupported value rather than simply display "0"
             // to clarify that the GPU/driver does not support the query. 
             printf("%d", iDevIDX);
+            static char* driverModelsString[] = { "WDDM", "TCC", "N/A" };
+            printf("\t%s", driverModelsString[driverModel]);
             if (bGPUUtilSupported) printf("\t%d\t%d", nvUtilData.gpu, nvUtilData.memory);
             else printf("\t-\t-");
-            printf("\t%lld / %lld", ulFrameBufferUsedMBytes, ulFrameBufferTotalMBytes);
-            printf("\t%d\t%d\t%d", clocks[NVML_CLOCK_GRAPHICS], clocks[NVML_CLOCK_SM], clocks[NVML_CLOCK_MEM]);
+            printf("\t%.1f / %.1f", ulFrameBufferUsedMBytes / 1024.0f, ulFrameBufferTotalMBytes / 1024.0f);
+            //printf("\t%d\t%d", clocks[NVML_CLOCK_SM], clocks[NVML_CLOCK_MEM]);
             printf("\t%-3d\t%-3d", pcieUtils[NVML_PCIE_UTIL_TX_BYTES] / 1024L, pcieUtils[NVML_PCIE_UTIL_RX_BYTES] / 1024L);
 
 #if 0
