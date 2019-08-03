@@ -111,14 +111,37 @@ int main(int argc, char* argv[])
         return iRetValue;
     }
 
+    printf("GPU\tMODE\tNAME\n");
+    for (unsigned int iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
+    {
+        nvmlDevice_t nvGPUDeviceHandle = NULL;
+        nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &nvGPUDeviceHandle);
+        CHECK_NVML(nvRetValue, nvmlDeviceGetHandleByIndex);
+        printf("%d", iDevIDX);
+
+        // Get driver mode, WDDM or TCC?
+        nvmlDriverModel_t driverModel, pendingDriverModel;
+        nvRetValue = nvmlDeviceGetDriverModel(nvGPUDeviceHandle, &driverModel, &pendingDriverModel);
+        CHECK_NVML(nvRetValue, nvmlDeviceGetDriverModel);
+        static char* driverModelsString[] = { "WDDM", "TCC", "N/A" };
+        printf("\t%s", driverModelsString[driverModel]);
+
+        // Get the device name
+        char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
+        nvRetValue = nvmlDeviceGetName(nvGPUDeviceHandle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
+        CHECK_NVML(nvRetValue, nvmlDeviceGetName);
+        printf("\t%s\n", cDevicename);
+    }
+    printf("============================================================\n");
+
     // Flags to denote unsupported queries
     bool bGPUUtilSupported = true;
     bool bEncoderUtilSupported = true;
     bool bDecoderUtilSupported = true;
 
     // Print out a header for the utilization output
-    printf("GPU\tMODE\tSM%%\tMEM%%\tFBuffer(GB)\tPCIE-W\tPCIE-R\tNAME\n");
-    printf("#id\t\t\t\tUsed / All\tMB\tMB\t\t\n");
+    printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX\n");
+    printf("#id\t%%\t%%\tUsed / All\tHz\tHz\tMB\tMB\n");
 
     bool running = true;
     while (running)
@@ -126,21 +149,11 @@ int main(int argc, char* argv[])
         // Iterate through all of the GPUs
         for (unsigned int iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
         {
-            GoToXY(0, iDevIDX + 2);
+            GoToXY(0, iDevIDX + 2 + uiNumGPUs + 2);
             // Get the GPU device handle
             nvmlDevice_t nvGPUDeviceHandle = NULL;
             nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &nvGPUDeviceHandle);
             CHECK_NVML(nvRetValue, nvmlDeviceGetHandleByIndex);
-
-            // Get the device name
-            char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
-            nvRetValue = nvmlDeviceGetName(nvGPUDeviceHandle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
-            CHECK_NVML(nvRetValue, nvmlDeviceGetName);
-
-            // 
-            nvmlDriverModel_t driverModel, pendingDriverModel;
-            nvRetValue = nvmlDeviceGetDriverModel(nvGPUDeviceHandle, &driverModel, &pendingDriverModel);
-            CHECK_NVML(nvRetValue, nvmlDeviceGetDriverModel);
 
             // NOTE: nvUtil.memory is the memory controller utilization not the frame buffer utilization
             nvmlUtilization_t nvUtilData;
@@ -212,12 +225,11 @@ int main(int argc, char* argv[])
             // I have opted to display "-" to denote an unsupported value rather than simply display "0"
             // to clarify that the GPU/driver does not support the query. 
             printf("%d", iDevIDX);
-            static char* driverModelsString[] = { "WDDM", "TCC", "N/A" };
-            printf("\t%s", driverModelsString[driverModel]);
+
             if (bGPUUtilSupported) printf("\t%d\t%d", nvUtilData.gpu, nvUtilData.memory);
             else printf("\t-\t-");
-            printf("\t%.1f / %.1f", ulFrameBufferUsedMBytes / 1024.0f, ulFrameBufferTotalMBytes / 1024.0f);
-            //printf("\t%d\t%d", clocks[NVML_CLOCK_SM], clocks[NVML_CLOCK_MEM]);
+            printf("\t%lld / %lld", ulFrameBufferUsedMBytes, ulFrameBufferTotalMBytes);
+            printf("\t%d\t%d", clocks[NVML_CLOCK_SM], clocks[NVML_CLOCK_MEM]);
             printf("\t%-3d\t%-3d", pcieUtils[NVML_PCIE_UTIL_TX_BYTES] / 1024L, pcieUtils[NVML_PCIE_UTIL_RX_BYTES] / 1024L);
 
 #if 0
@@ -226,7 +238,6 @@ int main(int argc, char* argv[])
             if (bDecoderUtilSupported) printf("\t%d", uiVidDecoderUtil);
             else printf("\t-");
 #endif
-            printf("\t%s\n", cDevicename);
         }
     }
 
