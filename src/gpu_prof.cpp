@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
 
     // Print out a header for the utilization output
     printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX\n");
-    printf("#id\t%%\t%%\tUsed / All\tHz\tHz\tMB\tMB\n");
+    printf("#id\t%%\t%%\tUsed / All\tMHz\tMHz\tMB\tMB\n");
 
     bool running = true;
     while (running)
