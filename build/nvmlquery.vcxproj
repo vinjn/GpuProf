@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\3rdparty\CImg.h" />
     <ClInclude Include="..\3rdparty\CUDA_SDK\nvml.h" />
     <ClInclude Include="..\src\amd_prof.h" />
     <ClInclude Include="..\src\intel_prof.h" />

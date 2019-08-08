@@ -5,6 +5,7 @@
     <ClInclude Include="..\src\intel_prof.h" />
     <ClInclude Include="..\src\nvidia_prof.h" />
     <ClInclude Include="..\3rdparty\CUDA_SDK\nvml.h" />
+    <ClInclude Include="..\3rdparty\CImg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpu_prof.cpp" />
