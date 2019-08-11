@@ -31,7 +31,8 @@
 #include "intel_prof.h"
 #include "amd_prof.h"
 
-#include "../3rdparty/CImg.h"
+//#include "../3rdparty/CImg.h"
+//using namespace cimg_library;
 
 #ifdef WIN32
 #include <Windows.h>
@@ -68,7 +69,6 @@ void GoToXY(int column, int line)
                 return iRetValue; \
             }
 
-using namespace cimg_library;
 
 // Application entry point
 int main(int argc, char* argv[])
@@ -137,30 +137,18 @@ int main(int argc, char* argv[])
     }
     printf("============================================================\n");
 
-    CImg<unsigned char> visu(800, 600, 1, 3, 0);
-    CImgDisplay disp(visu, "GpuProf");
+    // Flags to denote unsupported queries
+    bool bGPUUtilSupported = true;
+    bool bEncoderUtilSupported = true;
+    bool bDecoderUtilSupported = true;
 
-    const unsigned char blue[] = { 128,200,255 }, red[] = { 255,0,0 }, white[] = { 255,255,255 };
+    // Print out a header for the utilization output
+    printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX\n");
+    printf("#id\t%%\t%%\tUsed / All\tMHz\tMHz\tMB\tMB\n");
 
-    while (!disp.is_closed() && !disp.is_keyESC()) 
+    bool running = true;
+    while (running)
     {
-        visu.draw_ellipse(100, 100, 10, 10, 0, blue);
-        disp.display(visu).wait(20);
-
-        //.draw_graph(image.get_crop(0, y, 0, 0, image.width() - 1, y, 0, 0), red, 1, 1, 0, 255, 0);
-        //visu.draw_graph(image.get_crop(0, y, 0, 1, image.width() - 1, y, 0, 1), green, 1, 1, 0, 255, 0);
-        //visu.draw_graph(image.get_crop(0, y, 0, 2, image.width() - 1, y, 0, 2), blue, 1, 1, 0, 255, 0).display(draw_disp);
-
-
-        // Flags to denote unsupported queries
-        bool bGPUUtilSupported = true;
-        bool bEncoderUtilSupported = true;
-        bool bDecoderUtilSupported = true;
-
-        // Print out a header for the utilization output
-        printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX\n");
-        printf("#id\t%%\t%%\tUsed / All\tMHz\tMHz\tMB\tMB\n");
-
         // Iterate through all of the GPUs
         for (unsigned int iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
         {
@@ -255,7 +243,6 @@ int main(int argc, char* argv[])
 #endif
         }
     }
-
     // Shutdown NVML
     nvRetValue = nvmlShutdown();
     CHECK_NVML(nvRetValue, nvmlShutdown);
