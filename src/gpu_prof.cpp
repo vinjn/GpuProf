@@ -81,7 +81,10 @@ int getUInt(nvmlDevice_t device, int fieldId, uint32_t* value)
     nvRetValue = nvmlDeviceGetFieldValues(device, 1, &fieldValue);
     CHECK_NVML(nvRetValue, nvmlDeviceGetFieldValues);
 
-    *value = fieldValue.value.uiVal;    return 0;}
+    *value = fieldValue.value.uiVal;
+
+    return 0;
+}
 
 // Application entry point
 int main(int argc, char* argv[])
@@ -136,7 +139,7 @@ int main(int argc, char* argv[])
         nvmlDriverModel_t driverModel, pendingDriverModel;
         char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
         uint32_t numLinks;
-        nvmlEnableState_t nvlinkActive[NVML_NVLINK_MAX_LINKS];
+        nvmlEnableState_t nvlinkActives[NVML_NVLINK_MAX_LINKS];
         uint32_t nvlinkSpeeds[NVML_NVLINK_MAX_LINKS];
         nvmlPciInfo_t nvlinkPciInfos[NVML_NVLINK_MAX_LINKS];
     };
@@ -147,13 +150,26 @@ int main(int argc, char* argv[])
         nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &info.handle);
         CHECK_NVML(nvRetValue, nvmlDeviceGetHandleByIndex);
         printf("%d", iDevIDX);
-        nvmlDeviceGetPciInfo(info.handle, &info.pciInfo);        CHECK_NVML(nvRetValue, nvmlDeviceGetPciInfo);
+        nvmlDeviceGetPciInfo(info.handle, &info.pciInfo);
+        CHECK_NVML(nvRetValue, nvmlDeviceGetPciInfo);
 
         getUInt(info.handle, NVML_FI_DEV_NVLINK_LINK_COUNT, &info.numLinks);
         assert(info.numLinks <= NVML_NVLINK_MAX_LINKS);
         for (int j = 0; j < info.numLinks; j++)
         {
-            nvmlDeviceGetNvLinkState(info.handle, j, &info.nvlinkActive[j]);            getUInt(info.handle, NVML_FI_DEV_NVLINK_SPEED_MBPS_L0 + j, &info.nvlinkSpeeds[j]);            nvmlDeviceGetNvLinkRemotePciInfo(info.handle, j, &info.nvlinkPciInfos[j]);        }
+            nvmlDeviceGetNvLinkState(info.handle, j, &info.nvlinkActives[j]);
+            getUInt(info.handle, NVML_FI_DEV_NVLINK_SPEED_MBPS_L0 + j, &info.nvlinkSpeeds[j]);
+            nvmlDeviceGetNvLinkRemotePciInfo(info.handle, j, &info.nvlinkPciInfos[j]);
+
+            for (int counter = 0; counter < 2; counter++)
+            {
+                unsigned int reset = 1;
+                nvmlNvLinkUtilizationControl_t control = { NVML_NVLINK_COUNTER_UNIT_BYTES, NVML_NVLINK_COUNTER_PKTFILTER_ALL };
+                nvRetValue = nvmlDeviceSetNvLinkUtilizationControl(info.handle, j, counter, &control, reset);
+                CHECK_NVML(nvRetValue, nvmlDeviceSetNvLinkUtilizationControl);
+            }
+        }
+
         // Get driver mode, WDDM or TCC?
         nvRetValue = nvmlDeviceGetDriverModel(info.handle, &info.driverModel, &info.pendingDriverModel);
         CHECK_NVML(nvRetValue, nvmlDeviceGetDriverModel);
@@ -173,8 +189,8 @@ int main(int argc, char* argv[])
     bool bDecoderUtilSupported = true;
 
     // Print out a header for the utilization output
-    printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX\n");
-    printf("#id\t%%\t%%\tUsed / All\tMHz\tMHz\tMB\tMB\n");
+    printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX\tNVL-TX\tNVL-RX\n");
+    printf("#id\t%%\t%%\tUsed / All\tMHz\tMHz\tMB\tMB\tMB\tMB\n");
 
     bool running = true;
     while (running)
@@ -185,9 +201,7 @@ int main(int argc, char* argv[])
             auto& info = gpuInfos[iDevIDX];
             GoToXY(0, iDevIDX + 2 + uiNumGPUs + 2);
             // Get the GPU device handle
-            nvmlDevice_t handle = NULL;
-            nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &handle);
-            CHECK_NVML(nvRetValue, nvmlDeviceGetHandleByIndex);
+            nvmlDevice_t handle = info.handle;
 
             // NOTE: nvUtil.memory is the memory controller utilization not the frame buffer utilization
             nvmlUtilization_t nvUtilData;
@@ -199,8 +213,7 @@ int main(int argc, char* argv[])
             else CHECK_NVML(nvRetValue, nvmlDeviceGetUtilizationRates);
 
             // Get the GPU frame buffer memory information
-            nvmlMemory_t GPUmemoryInfo;
-            ZeroMemory(&GPUmemoryInfo, sizeof(GPUmemoryInfo));
+            nvmlMemory_t GPUmemoryInfo = {};
             nvRetValue = nvmlDeviceGetMemoryInfo(handle, &GPUmemoryInfo);
             CHECK_NVML(nvRetValue, nvmlDeviceGetMemoryInfo);
 
@@ -272,6 +285,10 @@ int main(int argc, char* argv[])
             if (bDecoderUtilSupported) printf("\t%d", uiVidDecoderUtil);
             else printf("\t-");
 #endif
+            if (info.nvlinkActives[0])
+            {
+
+            }
         }
     }
     // Shutdown NVML
