@@ -26,10 +26,14 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <vector>
+#include <assert.h>
 
 #include "nvidia_prof.h"
 #include "intel_prof.h"
 #include "amd_prof.h"
+
+using namespace std;
 
 //#include "../3rdparty/CImg.h"
 //using namespace cimg_library;
@@ -66,9 +70,18 @@ void GoToXY(int column, int line)
             { \
                 ShowErrorDetails(nvRetValue, #func); \
                 nvmlShutdown(); \
-                return iRetValue; \
+                return -1; \
             }
 
+int getUInt(nvmlDevice_t device, int fieldId, uint32_t* value)
+{
+    nvmlFieldValue_t fieldValue = {};
+    fieldValue.fieldId = fieldId;
+    nvmlReturn_t nvRetValue = NVML_ERROR_UNKNOWN;
+    nvRetValue = nvmlDeviceGetFieldValues(device, 1, &fieldValue);
+    CHECK_NVML(nvRetValue, nvmlDeviceGetFieldValues);
+
+    *value = fieldValue.value.uiVal;    return 0;}
 
 // Application entry point
 int main(int argc, char* argv[])
@@ -95,7 +108,7 @@ int main(int argc, char* argv[])
     nvRetValue = nvmlSystemGetCudaDriverVersion(&cudaDriverVersion);
 
     // Get the number of GPUs
-    unsigned int uiNumGPUs = 0;
+    uint32_t uiNumGPUs = 0;
     nvRetValue = nvmlDeviceGetCount(&uiNumGPUs);
     CHECK_NVML(nvRetValue, nvmlDeviceGetCount);
 
@@ -115,25 +128,42 @@ int main(int argc, char* argv[])
     }
 
     printf("GPU\tMODE\tNAME\n");
-    for (unsigned int iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
+
+    struct GpuInfo
     {
-        nvmlDevice_t nvGPUDeviceHandle = NULL;
-        nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &nvGPUDeviceHandle);
+        nvmlDevice_t handle = NULL;
+        nvmlPciInfo_t pciInfo;
+        nvmlDriverModel_t driverModel, pendingDriverModel;
+        char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
+        uint32_t numLinks;
+        nvmlEnableState_t nvlinkActive[NVML_NVLINK_MAX_LINKS];
+        uint32_t nvlinkSpeeds[NVML_NVLINK_MAX_LINKS];
+        nvmlPciInfo_t nvlinkPciInfos[NVML_NVLINK_MAX_LINKS];
+    };
+    vector<GpuInfo> gpuInfos(uiNumGPUs);
+    for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
+    {
+        auto& info = gpuInfos[iDevIDX];
+        nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &info.handle);
         CHECK_NVML(nvRetValue, nvmlDeviceGetHandleByIndex);
         printf("%d", iDevIDX);
+        nvmlDeviceGetPciInfo(info.handle, &info.pciInfo);        CHECK_NVML(nvRetValue, nvmlDeviceGetPciInfo);
 
+        getUInt(info.handle, NVML_FI_DEV_NVLINK_LINK_COUNT, &info.numLinks);
+        assert(info.numLinks <= NVML_NVLINK_MAX_LINKS);
+        for (int j = 0; j < info.numLinks; j++)
+        {
+            nvmlDeviceGetNvLinkState(info.handle, j, &info.nvlinkActive[j]);            getUInt(info.handle, NVML_FI_DEV_NVLINK_SPEED_MBPS_L0 + j, &info.nvlinkSpeeds[j]);            nvmlDeviceGetNvLinkRemotePciInfo(info.handle, j, &info.nvlinkPciInfos[j]);        }
         // Get driver mode, WDDM or TCC?
-        nvmlDriverModel_t driverModel, pendingDriverModel;
-        nvRetValue = nvmlDeviceGetDriverModel(nvGPUDeviceHandle, &driverModel, &pendingDriverModel);
+        nvRetValue = nvmlDeviceGetDriverModel(info.handle, &info.driverModel, &info.pendingDriverModel);
         CHECK_NVML(nvRetValue, nvmlDeviceGetDriverModel);
         static char* driverModelsString[] = { "WDDM", "TCC", "N/A" };
-        printf("\t%s", driverModelsString[driverModel]);
+        printf("\t%s", driverModelsString[info.driverModel]);
 
         // Get the device name
-        char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
-        nvRetValue = nvmlDeviceGetName(nvGPUDeviceHandle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
+        nvRetValue = nvmlDeviceGetName(info.handle, info.cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
         CHECK_NVML(nvRetValue, nvmlDeviceGetName);
-        printf("\t%s\n", cDevicename);
+        printf("\t%s\n", info.cDevicename);
     }
     printf("============================================================\n");
 
@@ -150,17 +180,18 @@ int main(int argc, char* argv[])
     while (running)
     {
         // Iterate through all of the GPUs
-        for (unsigned int iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
+        for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
         {
+            auto& info = gpuInfos[iDevIDX];
             GoToXY(0, iDevIDX + 2 + uiNumGPUs + 2);
             // Get the GPU device handle
-            nvmlDevice_t nvGPUDeviceHandle = NULL;
-            nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &nvGPUDeviceHandle);
+            nvmlDevice_t handle = NULL;
+            nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &handle);
             CHECK_NVML(nvRetValue, nvmlDeviceGetHandleByIndex);
 
             // NOTE: nvUtil.memory is the memory controller utilization not the frame buffer utilization
             nvmlUtilization_t nvUtilData;
-            nvRetValue = nvmlDeviceGetUtilizationRates(nvGPUDeviceHandle, &nvUtilData);
+            nvRetValue = nvmlDeviceGetUtilizationRates(handle, &nvUtilData);
             if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
                 bGPUUtilSupported = false;
@@ -170,7 +201,7 @@ int main(int argc, char* argv[])
             // Get the GPU frame buffer memory information
             nvmlMemory_t GPUmemoryInfo;
             ZeroMemory(&GPUmemoryInfo, sizeof(GPUmemoryInfo));
-            nvRetValue = nvmlDeviceGetMemoryInfo(nvGPUDeviceHandle, &GPUmemoryInfo);
+            nvRetValue = nvmlDeviceGetMemoryInfo(handle, &GPUmemoryInfo);
             CHECK_NVML(nvRetValue, nvmlDeviceGetMemoryInfo);
 
             // verify that the uint64_t to unsigned long cast will not result in lost data
@@ -189,9 +220,9 @@ int main(int argc, char* argv[])
             double dMemUtilzation = (((double)ulFrameBufferUsedMBytes / (double)ulFrameBufferTotalMBytes) * 100.0);
 
             // Get the video encoder utilization (where supported)
-            unsigned int uiVidEncoderUtil = 0u;
-            unsigned int uiVideEncoderLastSample = 0u;
-            nvRetValue = nvmlDeviceGetEncoderUtilization(nvGPUDeviceHandle, &uiVidEncoderUtil, &uiVideEncoderLastSample);
+            uint32_t uiVidEncoderUtil = 0u;
+            uint32_t uiVideEncoderLastSample = 0u;
+            nvRetValue = nvmlDeviceGetEncoderUtilization(handle, &uiVidEncoderUtil, &uiVideEncoderLastSample);
             if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
                 bEncoderUtilSupported = false;
@@ -199,9 +230,9 @@ int main(int argc, char* argv[])
             else CHECK_NVML(nvRetValue, nvmlDeviceGetEncoderUtilization);
 
             // Get the video decoder utilization (where supported)
-            unsigned int uiVidDecoderUtil = 0u;
-            unsigned int uiVidDecoderLastSample = 0u;
-            nvRetValue = nvmlDeviceGetDecoderUtilization(nvGPUDeviceHandle, &uiVidDecoderUtil, &uiVidDecoderLastSample);
+            uint32_t uiVidDecoderUtil = 0u;
+            uint32_t uiVidDecoderLastSample = 0u;
+            nvRetValue = nvmlDeviceGetDecoderUtilization(handle, &uiVidDecoderUtil, &uiVidDecoderLastSample);
             if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
                 bDecoderUtilSupported = false;
@@ -212,7 +243,7 @@ int main(int argc, char* argv[])
             uint32_t clocks[NVML_CLOCK_COUNT];
             for (int i = 0; i < NVML_CLOCK_COUNT; i++)
             {
-                nvRetValue = nvmlDeviceGetClockInfo(nvGPUDeviceHandle, nvmlClockType_t(i), clocks + i);
+                nvRetValue = nvmlDeviceGetClockInfo(handle, nvmlClockType_t(i), clocks + i);
                 CHECK_NVML(nvRetValue, nvmlDeviceGetClockInfo);
             }
 
@@ -220,7 +251,7 @@ int main(int argc, char* argv[])
             uint32_t pcieUtils[NVML_PCIE_UTIL_COUNT];
             for (int i = 0; i < NVML_PCIE_UTIL_COUNT; i++)
             {
-                nvRetValue = nvmlDeviceGetPcieThroughput(nvGPUDeviceHandle, nvmlPcieUtilCounter_t(i), pcieUtils + i);
+                nvRetValue = nvmlDeviceGetPcieThroughput(handle, nvmlPcieUtilCounter_t(i), pcieUtils + i);
                 CHECK_NVML(nvRetValue, nvmlDeviceGetPcieThroughput);
             }
 
