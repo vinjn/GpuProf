@@ -73,6 +73,7 @@ using namespace cimg_library;
 // Application entry point
 int main(int argc, char* argv[])
 {
+
     int iRetValue = -1;
     nvmlReturn_t nvRetValue = NVML_ERROR_UNINITIALIZED;
 
@@ -137,22 +138,49 @@ int main(int argc, char* argv[])
     }
     printf("============================================================\n");
 
-    CImg<unsigned char> visu(800, 600, 1, 3, 0);
-    CImgDisplay disp(visu, "GpuProf");
+    // Display program usage, when invoked from the command line with option '-h'.
+    cimg_usage("View the color profile of an image along the X axis");
 
-    const unsigned char blue[] = { 128,200,255 }, red[] = { 255,0,0 }, white[] = { 255,255,255 };
+    // Read image filename from the command line (or set it to "img/parrot.ppm" if option '-i' is not provided).
+    const char* file_i = cimg_option("-i", "parrot.ppm", "Input image");
 
-    while (!disp.is_closed() && !disp.is_keyESC()) 
+    // Read pre-blurring variance from the command line (or set it to 1.0 if option '-blur' is not provided).
+    const double sigma = cimg_option("-blur", 1.0, "Variance of gaussian pre-blurring");
+
+    // Init variables
+    //----------------
+
+    // Create two display window, one for the image, the other for the color profile.
+    CImgDisplay draw_disp(800, 600, "GpuProf", 0);
+
+    // Define colors used to plot the profile, and a hatch to draw the vertical line
+    unsigned int hatch = 0xF0F0F0F0;
+    const uint8_t
+        red[] = { 255,0,0 },
+        green[] = { 0,255,0 },
+        blue[] = { 0,0,255 },
+        black[] = { 0,0,0 };
+
+    CImg<uint8_t> metrics[3];
+    metrics[0] = CImg<uint8_t>(100, 100, 1, 3);
+    metrics[1] = CImg<uint8_t>(100, 100, 1, 3);
+    metrics[1] = CImg<uint8_t>(100, 100, 1, 3);
+    // Enter event loop. This loop ends when one of the two display window is closed or
+    // when the keys 'ESC' or 'Q' are pressed.
+    while (!draw_disp.is_closed() && !draw_disp.is_keyESC())
     {
-        visu.draw_ellipse(100, 100, 10, 10, 0, blue);
-        disp.display(visu).wait(20);
+        // Handle display window resizing (if any)
+        draw_disp.resize();
 
-        //.draw_graph(image.get_crop(0, y, 0, 0, image.width() - 1, y, 0, 0), red, 1, 1, 0, 255, 0);
-        //visu.draw_graph(image.get_crop(0, y, 0, 1, image.width() - 1, y, 0, 1), green, 1, 1, 0, 255, 0);
-        //visu.draw_graph(image.get_crop(0, y, 0, 2, image.width() - 1, y, 0, 2), blue, 1, 1, 0, 255, 0).display(draw_disp);
+        if (draw_disp.mouse_x() >= 0 && draw_disp.mouse_y() >= 0) { // Mouse pointer is over the image
+        }
 
+        const int
+            xm = draw_disp.mouse_x(),                     // X-coordinate of the mouse pointer over the image
+            ym = draw_disp.mouse_y(),                     // Y-coordinate of the mouse pointer over the image
+            xl = xm * draw_disp.width() / draw_disp.width();  // Corresponding X-coordinate of the hatched line
 
-        // Flags to denote unsupported queries
+    // Flags to denote unsupported queries
         bool bGPUUtilSupported = true;
         bool bEncoderUtilSupported = true;
         bool bDecoderUtilSupported = true;
@@ -254,6 +282,26 @@ int main(int argc, char* argv[])
             else printf("\t-");
 #endif
         }
+        // Retrieve color component values at pixel (x,y)
+      //const unsigned int
+      //    val_red = image(x, y, 0),
+      //    val_green = image(x, y, 1),
+      //    val_blue = image(x, y, 2);
+
+      // Create and display the image of the intensity profile
+        CImg<uint8_t>(draw_disp.width(), draw_disp.height(), 1, 3, 255).
+            //draw_grid(-50 * 100.0f / image.width(), -50 * 100.0f / 256, 0, 0, false, true, black, 0.2f, 0xCCCCCCCC, 0xCCCCCCCC).
+            draw_axes(0, draw_disp.width() - 1.0f, 255.0f, 0.0f, black).
+            draw_graph(metrics[0], red, 1, 1, 0, 255, 1).
+            draw_graph(metrics[1], green, 1, 1, 0, 255, 1).
+            draw_graph(metrics[2], blue, 1, 1, 0, 255, 1).
+            //draw_text(30, 5, "Pixel (%d,%d)={%d %d %d}", black, 0, 1, 16,
+            //    draw_disp.mouse_x(), draw_disp.mouse_y(), val_red, val_green, val_blue).
+            draw_line(xl, 0, xl, draw_disp.height() - 1, black, 0.5f, hatch = cimg::rol(hatch)).
+            display(draw_disp);
+
+        // Temporize event loop
+        cimg::wait(0);
     }
 
     // Shutdown NVML
