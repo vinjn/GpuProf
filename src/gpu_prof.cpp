@@ -38,10 +38,12 @@ using namespace std;
 #include "../3rdparty/CImg.h"
 using namespace cimg_library;
 
-bool isCanvasVisible = false;
+bool isCanvasVisible = true;
 
-CImg<uint8_t> canvas(800, 600, 1, 3, 255);
-CImgDisplay window(canvas, "GpuProf", 3, false, true);
+#define WINDOW_W 640
+#define WINDOW_H 480
+
+CImgDisplay window(WINDOW_W, WINDOW_H, "GpuProf", 3);
 enum MetricType
 {
     METRIC_SM_SOL,
@@ -54,6 +56,29 @@ enum MetricType
 
     METRIC_COUNT,
 };
+
+struct GpuInfo
+{
+    nvmlDevice_t handle = NULL;
+    nvmlPciInfo_t pciInfo;
+    nvmlDriverModel_t driverModel, pendingDriverModel;
+    char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
+    uint32_t numLinks;
+    nvmlEnableState_t nvlinkActives[NVML_NVLINK_MAX_LINKS];
+    uint32_t nvlinkSpeeds[NVML_NVLINK_MAX_LINKS];
+    nvmlPciInfo_t nvlinkPciInfos[NVML_NVLINK_MAX_LINKS];
+
+    static const int HISTORY_COUNT = WINDOW_W / 2;
+    float metrics[METRIC_COUNT][HISTORY_COUNT] = {};
+    void addMetric(MetricType type, float value)
+    {
+        for (int i = 0; i < HISTORY_COUNT - 1; i++)
+            metrics[type][i] = metrics[type][i + 1];
+        metrics[type][HISTORY_COUNT - 1] = value;
+    }
+};
+
+vector<GpuInfo> gpuInfos;
 
 #ifdef WIN32
 #include <Windows.h>
@@ -132,13 +157,6 @@ int main(int argc, char* argv[])
     nvRetValue = nvmlDeviceGetCount(&uiNumGPUs);
     CHECK_NVML(nvRetValue, nvmlDeviceGetCount);
 
-    if (NVML_SUCCESS != nvRetValue)
-    {
-        ShowErrorDetails(nvRetValue, "nvmlDeviceGetCount");
-        nvmlShutdown();
-        return iRetValue;
-    }
-
     // In the case that no GPUs were detected
     if (0 == uiNumGPUs)
     {
@@ -149,25 +167,13 @@ int main(int argc, char* argv[])
 
     printf("GPU\tMODE\tNAME\n");
 
-    struct GpuInfo
-    {
-        nvmlDevice_t handle = NULL;
-        nvmlPciInfo_t pciInfo;
-        nvmlDriverModel_t driverModel, pendingDriverModel;
-        char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
-        uint32_t numLinks;
-        nvmlEnableState_t nvlinkActives[NVML_NVLINK_MAX_LINKS];
-        uint32_t nvlinkSpeeds[NVML_NVLINK_MAX_LINKS];
-        nvmlPciInfo_t nvlinkPciInfos[NVML_NVLINK_MAX_LINKS];
-    };
-
     // Flags to denote unsupported queries
     bool bNVLinkSupported = false;
     bool bGPUUtilSupported = true;
     bool bEncoderUtilSupported = true;
     bool bDecoderUtilSupported = true;
 
-    vector<GpuInfo> gpuInfos(uiNumGPUs);
+    gpuInfos.resize(uiNumGPUs);
     for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
     {
         auto& info = gpuInfos[iDevIDX];
@@ -177,6 +183,7 @@ int main(int argc, char* argv[])
         nvmlDeviceGetPciInfo(info.handle, &info.pciInfo);
         CHECK_NVML(nvRetValue, nvmlDeviceGetPciInfo);
 
+        // nvlink
         getUInt(info.handle, NVML_FI_DEV_NVLINK_LINK_COUNT, &info.numLinks);
         assert(info.numLinks <= NVML_NVLINK_MAX_LINKS);
         for (int j = 0; j < info.numLinks; j++)
@@ -257,7 +264,9 @@ int main(int argc, char* argv[])
             uint64_t ulFrameBufferUsedMBytes = (uint64_t)(ulFrameBufferTotalMBytes - (GPUmemoryInfo.free / 1024L / 1024L));
 
             // calculate the frame buffer memory utilization
-            double dMemUtilzation = (((double)ulFrameBufferUsedMBytes / (double)ulFrameBufferTotalMBytes) * 100.0);
+            info.addMetric(METRIC_SM_SOL, nvUtilData.gpu);
+            info.addMetric(METRIC_MEM_SOL, nvUtilData.memory);
+            info.addMetric(METRIC_FB_USAGE, ulFrameBufferUsedMBytes * 100.0f / ulFrameBufferTotalMBytes);
 
             // Get the video encoder utilization (where supported)
             uint32_t uiVidEncoderUtil = 0u;
@@ -318,7 +327,7 @@ int main(int argc, char* argv[])
             }
         }
         // GUI
-#ifdef WIN32
+#ifdef WIN32_WITH_THIS
         SHORT state = GetAsyncKeyState(VK_SPACE);
         if (state & 1)
         {
@@ -326,19 +335,46 @@ int main(int argc, char* argv[])
             isCanvasVisible = !isCanvasVisible;
             if (isCanvasVisible) window.show();
             else window.close();
-    }
+        }
 #endif
 
         if (isCanvasVisible)
         {
-            //if (window.is_keyESC()) running = false;
+            if (window.is_keyESC()) running = false;
               // Define colors used to plot the profile, and a hatch to draw the vertical line
             unsigned int hatch = 0xF0F0F0F0;
             const unsigned char
-                red[] = { 255,0,0 },
-                green[] = { 0,255,0 },
-                blue[] = { 0,0,255 },
+                red[] = { 122,0,0 },
+                green[] = { 0,122,0 },
+                blue[] = { 0,0,122 },
                 black[] = { 0,0,0 };
+
+
+            const auto& info = gpuInfos[0];
+            CImg<float> img1(info.metrics[METRIC_SM_SOL], GpuInfo::HISTORY_COUNT, 1);
+            CImg<float> img2(info.metrics[METRIC_MEM_SOL], GpuInfo::HISTORY_COUNT, 1);
+            CImg<float> img3(info.metrics[METRIC_FB_USAGE], GpuInfo::HISTORY_COUNT, 1);
+            int plotType = 1;
+            int vertexType = 1;
+            float alpha = 0.5f;
+            // Create and display the image of the intensity profile
+            CImg<unsigned char> img(window.width(), window.height(), 1, 3, 255);
+            img.
+                draw_grid(-50 * 100.0f / window.width(), -50 * 100.0f / 256, 0, 0, false, true, black, 0.2f, 0xCCCCCCCC, 0xCCCCCCCC).
+                //draw_axes(0, window.width() - 1.0f, 255.0f, 0.0f, black).
+                draw_graph(img1, red, alpha, plotType, vertexType, 100, 0).
+                draw_graph(img2, green, alpha, plotType, vertexType, 100, 0).
+                draw_graph(img3, blue, alpha, plotType, vertexType, 100, 0);
+
+            auto xm = window.mouse_x();
+            auto ym = window.mouse_y();
+            if (xm >=0 && ym >= 0)
+            {
+                img.draw_text(30, 5, " SM: %.1f%%\nMEM: %.1f%%\n FB: %.1f%%", black, 0, 1, 16,
+                    info.metrics[METRIC_SM_SOL][xm / 2], info.metrics[METRIC_MEM_SOL][xm / 2], info.metrics[METRIC_FB_USAGE][xm / 2]);
+                img.draw_line(xm, 0, xm, window.height() - 1, black, 0.5f, hatch = cimg::rol(hatch));
+            }
+            img.display(window);
         }
     }
     // Shutdown NVML
