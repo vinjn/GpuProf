@@ -35,8 +35,10 @@
 
 using namespace std;
 
-//#include "../3rdparty/CImg.h"
-//using namespace cimg_library;
+#include "../3rdparty/CImg.h"
+using namespace cimg_library;
+
+bool isCanvasVisible = false;
 
 #ifdef WIN32
 #include <Windows.h>
@@ -143,6 +145,13 @@ int main(int argc, char* argv[])
         uint32_t nvlinkSpeeds[NVML_NVLINK_MAX_LINKS];
         nvmlPciInfo_t nvlinkPciInfos[NVML_NVLINK_MAX_LINKS];
     };
+
+    // Flags to denote unsupported queries
+    bool bNVLinkSupported = false;
+    bool bGPUUtilSupported = true;
+    bool bEncoderUtilSupported = true;
+    bool bDecoderUtilSupported = true;
+
     vector<GpuInfo> gpuInfos(uiNumGPUs);
     for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
     {
@@ -157,6 +166,7 @@ int main(int argc, char* argv[])
         assert(info.numLinks <= NVML_NVLINK_MAX_LINKS);
         for (int j = 0; j < info.numLinks; j++)
         {
+            bNVLinkSupported = true;
             nvmlDeviceGetNvLinkState(info.handle, j, &info.nvlinkActives[j]);
             getUInt(info.handle, NVML_FI_DEV_NVLINK_SPEED_MBPS_L0 + j, &info.nvlinkSpeeds[j]);
             nvmlDeviceGetNvLinkRemotePciInfo(info.handle, j, &info.nvlinkPciInfos[j]);
@@ -182,19 +192,28 @@ int main(int argc, char* argv[])
         printf("\t%s\n", info.cDevicename);
     }
     printf("============================================================\n");
-
-    // Flags to denote unsupported queries
-    bool bGPUUtilSupported = true;
-    bool bEncoderUtilSupported = true;
-    bool bDecoderUtilSupported = true;
-
+  
     // Print out a header for the utilization output
-    printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX\tNVL-TX\tNVL-RX\n");
-    printf("#id\t%%\t%%\tUsed / All\tMHz\tMHz\tMB\tMB\tMB\tMB\n");
+    printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX");
+    if (bNVLinkSupported)
+        printf("\tNVL-TX\tNVL-RX");
+    printf("\n");
+    printf("#id\t%%\t%%\tUsed / All\tMHz\tMHz\tMB\tMB");
+    if (bNVLinkSupported)
+        printf("\tMB\tMB");
+    printf("\n");
 
     bool running = true;
     while (running)
     {
+#ifdef WIN32
+        SHORT state = GetAsyncKeyState(VK_ESCAPE);
+        if (state & 1)
+        {
+            // LSB of state indicates it's a "CLICK"
+            isCanvasVisible = !isCanvasVisible;
+        }
+#endif
         // Iterate through all of the GPUs
         for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
         {
