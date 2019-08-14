@@ -40,6 +40,21 @@ using namespace cimg_library;
 
 bool isCanvasVisible = false;
 
+CImg<uint8_t> canvas(800, 600, 1, 3, 255);
+CImgDisplay window(canvas, "GpuProf", 3, false, true);
+enum MetricType
+{
+    METRIC_SM_SOL,
+    METRIC_MEM_SOL,
+    METRIC_FB_USAGE,
+    METRIC_SM_CLK,
+    METRIC_MEM_CLK,
+    METRIC_PCIE_TX,
+    METRIC_PCIE_RX,
+
+    METRIC_COUNT,
+};
+
 #ifdef WIN32
 #include <Windows.h>
 void GoToXY(int column, int line)
@@ -206,14 +221,7 @@ int main(int argc, char* argv[])
     bool running = true;
     while (running)
     {
-#ifdef WIN32
-        SHORT state = GetAsyncKeyState(VK_ESCAPE);
-        if (state & 1)
-        {
-            // LSB of state indicates it's a "CLICK"
-            isCanvasVisible = !isCanvasVisible;
-        }
-#endif
+        // CLI
         // Iterate through all of the GPUs
         for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
         {
@@ -308,6 +316,29 @@ int main(int argc, char* argv[])
             {
 
             }
+        }
+        // GUI
+#ifdef WIN32
+        SHORT state = GetAsyncKeyState(VK_SPACE);
+        if (state & 1)
+        {
+            // LSB of state indicates it's a "CLICK"
+            isCanvasVisible = !isCanvasVisible;
+            if (isCanvasVisible) window.show();
+            else window.close();
+    }
+#endif
+
+        if (isCanvasVisible)
+        {
+            //if (window.is_keyESC()) running = false;
+              // Define colors used to plot the profile, and a hatch to draw the vertical line
+            unsigned int hatch = 0xF0F0F0F0;
+            const unsigned char
+                red[] = { 255,0,0 },
+                green[] = { 0,255,0 },
+                blue[] = { 0,0,255 },
+                black[] = { 0,0,0 };
         }
     }
     // Shutdown NVML
