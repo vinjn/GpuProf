@@ -111,8 +111,11 @@ void GoToXY(int column, int line)
             if (NVML_SUCCESS != nvRetValue) \
             { \
                 ShowErrorDetails(nvRetValue, #func); \
-                nvmlShutdown(); \
-                return -1; \
+                if (nvRetValue != NVML_ERROR_NO_PERMISSION) \
+                { \
+                    nvmlShutdown(); \
+                    return -1; \
+                } \
             }
 
 int getUInt(nvmlDevice_t device, int fieldId, uint32_t* value)
@@ -121,16 +124,9 @@ int getUInt(nvmlDevice_t device, int fieldId, uint32_t* value)
     fieldValue.fieldId = fieldId;
     nvmlReturn_t nvRetValue = NVML_ERROR_UNKNOWN;
     nvRetValue = nvmlDeviceGetFieldValues(device, 1, &fieldValue);
-    if (nvRetValue == NVML_ERROR_NO_PERMISSION)
-    {
-        ShowErrorDetails(nvRetValue, "getUInt");
-        *value = 0;
-    }
-    else
-    {
-        CHECK_NVML(nvRetValue, nvmlDeviceGetFieldValues);
-        *value = fieldValue.value.uiVal;
-    }
+    *value = 0;
+    CHECK_NVML(nvRetValue, nvmlDeviceGetFieldValues);
+    *value = fieldValue.value.uiVal;
 
     return 0;
 }
