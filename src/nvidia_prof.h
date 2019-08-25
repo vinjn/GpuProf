@@ -9,5 +9,5 @@
 void ShowErrorDetails(const nvmlReturn_t nvRetVal, const char* pFunctionName)
 {
 	auto pErrorDescription = nvmlErrorString(nvRetVal);
-	printf("[%s] - %s\r\n", pFunctionName, pErrorDescription);
+	fprintf(stderr, "[%s] - %s\r\n", pFunctionName, pErrorDescription);
 }

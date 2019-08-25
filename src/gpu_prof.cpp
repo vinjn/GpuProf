@@ -110,9 +110,9 @@ void GoToXY(int column, int line)
 #define CHECK_NVML(nvRetValue, func) \
             if (NVML_SUCCESS != nvRetValue) \
             { \
-                ShowErrorDetails(nvRetValue, #func); \
                 if (nvRetValue != NVML_ERROR_NO_PERMISSION) \
                 { \
+                    ShowErrorDetails(nvRetValue, #func); \
                     nvmlShutdown(); \
                     return -1; \
                 } \
