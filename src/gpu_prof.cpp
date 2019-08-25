@@ -121,9 +121,16 @@ int getUInt(nvmlDevice_t device, int fieldId, uint32_t* value)
     fieldValue.fieldId = fieldId;
     nvmlReturn_t nvRetValue = NVML_ERROR_UNKNOWN;
     nvRetValue = nvmlDeviceGetFieldValues(device, 1, &fieldValue);
-    CHECK_NVML(nvRetValue, nvmlDeviceGetFieldValues);
-
-    *value = fieldValue.value.uiVal;
+    if (nvRetValue == NVML_ERROR_NO_PERMISSION)
+    {
+        ShowErrorDetails(nvRetValue, "getUInt");
+        *value = 0;
+    }
+    else
+    {
+        CHECK_NVML(nvRetValue, nvmlDeviceGetFieldValues);
+        *value = fieldValue.value.uiVal;
+    }
 
     return 0;
 }
