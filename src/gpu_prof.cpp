@@ -68,6 +68,11 @@ struct GpuInfo
     uint32_t nvlinkSpeeds[NVML_NVLINK_MAX_LINKS];
     nvmlPciInfo_t nvlinkPciInfos[NVML_NVLINK_MAX_LINKS];
 
+    // Flags to denote unsupported queries
+    bool bGPUUtilSupported = true;
+    bool bEncoderUtilSupported = true;
+    bool bDecoderUtilSupported = true;
+
     static const int HISTORY_COUNT = WINDOW_W / 2;
     float metrics[METRIC_COUNT][HISTORY_COUNT] = {};
     void addMetric(MetricType type, float value)
@@ -168,14 +173,10 @@ int main(int argc, char* argv[])
         return iRetValue;
     }
 
-    printf("GPU\tMODE\tNAME\n");
-
-    // Flags to denote unsupported queries
     bool bNVLinkSupported = false;
-    bool bGPUUtilSupported = true;
-    bool bEncoderUtilSupported = true;
-    bool bDecoderUtilSupported = true;
 
+    printf("GPU\tMODE\tNAME\n");
+    
     gpuInfos.resize(uiNumGPUs);
     for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
     {
@@ -245,7 +246,7 @@ int main(int argc, char* argv[])
             nvRetValue = nvmlDeviceGetUtilizationRates(handle, &nvUtilData);
             if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
-                bGPUUtilSupported = false;
+                info.bGPUUtilSupported = false;
             }
             else CHECK_NVML(nvRetValue, nvmlDeviceGetUtilizationRates);
 
@@ -277,7 +278,7 @@ int main(int argc, char* argv[])
             nvRetValue = nvmlDeviceGetEncoderUtilization(handle, &uiVidEncoderUtil, &uiVideEncoderLastSample);
             if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
-                bEncoderUtilSupported = false;
+                info.bEncoderUtilSupported = false;
             }
             else CHECK_NVML(nvRetValue, nvmlDeviceGetEncoderUtilization);
 
@@ -287,7 +288,7 @@ int main(int argc, char* argv[])
             nvRetValue = nvmlDeviceGetDecoderUtilization(handle, &uiVidDecoderUtil, &uiVidDecoderLastSample);
             if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
-                bDecoderUtilSupported = false;
+                info.bDecoderUtilSupported = false;
             }
             else CHECK_NVML(nvRetValue, nvmlDeviceGetEncoderUtilization);
 
@@ -296,7 +297,11 @@ int main(int argc, char* argv[])
             for (int i = 0; i < NVML_CLOCK_COUNT; i++)
             {
                 nvRetValue = nvmlDeviceGetClockInfo(handle, nvmlClockType_t(i), clocks + i);
-                CHECK_NVML(nvRetValue, nvmlDeviceGetClockInfo);
+                if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
+                {
+
+                }
+                else CHECK_NVML(nvRetValue, nvmlDeviceGetClockInfo);
             }
 
             // pcie traffic
@@ -304,7 +309,11 @@ int main(int argc, char* argv[])
             for (int i = 0; i < NVML_PCIE_UTIL_COUNT; i++)
             {
                 nvRetValue = nvmlDeviceGetPcieThroughput(handle, nvmlPcieUtilCounter_t(i), pcieUtils + i);
-                CHECK_NVML(nvRetValue, nvmlDeviceGetPcieThroughput);
+                if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
+                {
+
+                }
+                else CHECK_NVML(nvRetValue, nvmlDeviceGetPcieThroughput);
             }
 
             // Output the utilization results depending on which of the counters has data available
@@ -312,7 +321,7 @@ int main(int argc, char* argv[])
             // to clarify that the GPU/driver does not support the query. 
             printf("%d", iDevIDX);
 
-            if (bGPUUtilSupported) printf("\t%d\t%d", nvUtilData.gpu, nvUtilData.memory);
+            if (info.bGPUUtilSupported) printf("\t%d\t%d", nvUtilData.gpu, nvUtilData.memory);
             else printf("\t-\t-");
             printf("\t%lld / %lld", ulFrameBufferUsedMBytes, ulFrameBufferTotalMBytes);
             printf("\t%d\t%d", clocks[NVML_CLOCK_SM], clocks[NVML_CLOCK_MEM]);
