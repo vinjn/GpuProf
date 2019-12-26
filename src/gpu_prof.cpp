@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <vector>
 #include <assert.h>
+#include <memory>
 
 #include "nvidia_prof.h"
 #include "intel_prof.h"
@@ -41,9 +42,10 @@ using namespace cimg_library;
 bool isCanvasVisible = true;
 
 #define WINDOW_W 640
-#define WINDOW_H 480
+#define WINDOW_H 240
 
-CImgDisplay window(WINDOW_W, WINDOW_H, "GpuProf", 3);
+vector<shared_ptr<CImgDisplay>> windows;
+
 enum MetricType
 {
     METRIC_SM_SOL,
@@ -178,6 +180,7 @@ int main(int argc, char* argv[])
     printf("GPU\tMODE\tNAME\n");
     
     gpuInfos.resize(uiNumGPUs);
+
     for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
     {
         auto& info = gpuInfos[iDevIDX];
@@ -216,6 +219,9 @@ int main(int argc, char* argv[])
         nvRetValue = nvmlDeviceGetName(info.handle, info.cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
         CHECK_NVML(nvRetValue, nvmlDeviceGetName);
         printf("\t%s\n", info.cDevicename);
+
+        auto window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, info.cDevicename, 3);
+        windows.push_back(window);
     }
     printf("============================================================\n");
   
@@ -345,48 +351,69 @@ int main(int argc, char* argv[])
         {
             // LSB of state indicates it's a "CLICK"
             isCanvasVisible = !isCanvasVisible;
-            if (isCanvasVisible) window.show();
-            else window.close();
+            if (isCanvasVisible) window->show();
+            else window->close();
         }
 #endif
 
+
         if (isCanvasVisible)
         {
-            if (window.is_keyESC()) running = false;
-              // Define colors used to plot the profile, and a hatch to draw the vertical line
-            unsigned int hatch = 0xF0F0F0F0;
-            const unsigned char
-                red[] = { 122,0,0 },
-                green[] = { 0,122,0 },
-                blue[] = { 0,0,122 },
-                black[] = { 0,0,0 };
 
-
-            const auto& info = gpuInfos[0];
-            CImg<float> img1(info.metrics[METRIC_SM_SOL], GpuInfo::HISTORY_COUNT, 1);
-            CImg<float> img2(info.metrics[METRIC_MEM_SOL], GpuInfo::HISTORY_COUNT, 1);
-            CImg<float> img3(info.metrics[METRIC_FB_USAGE], GpuInfo::HISTORY_COUNT, 1);
-            int plotType = 1;
-            int vertexType = 1;
-            float alpha = 0.5f;
-            // Create and display the image of the intensity profile
-            CImg<unsigned char> img(window.width(), window.height(), 1, 3, 255);
-            img.
-                draw_grid(-50 * 100.0f / window.width(), -50 * 100.0f / 256, 0, 0, false, true, black, 0.2f, 0xCCCCCCCC, 0xCCCCCCCC).
-                //draw_axes(0, window.width() - 1.0f, 255.0f, 0.0f, black).
-                draw_graph(img1, red, alpha, plotType, vertexType, 100, 0).
-                draw_graph(img2, green, alpha, plotType, vertexType, 100, 0).
-                draw_graph(img3, blue, alpha, plotType, vertexType, 100, 0);
-
-            auto xm = window.mouse_x();
-            auto ym = window.mouse_y();
-            if (xm >=0 && ym >= 0)
+            int global_mouse_x = -1;
+            int global_mouse_y = -1;
+            for (auto& window : windows)
             {
-                img.draw_text(30, 5, " SM: %.1f%%\nMEM: %.1f%%\n FB: %.1f%%", black, 0, 1, 16,
-                    info.metrics[METRIC_SM_SOL][xm / 2], info.metrics[METRIC_MEM_SOL][xm / 2], info.metrics[METRIC_FB_USAGE][xm / 2]);
-                img.draw_line(xm, 0, xm, window.height() - 1, black, 0.5f, hatch = cimg::rol(hatch));
+                auto xm = window->mouse_x();
+                auto ym = window->mouse_y();
+                if (xm >= 0 && ym >= 0)
+                {
+                    global_mouse_x = xm;
+                    global_mouse_y = ym;
+                }
             }
-            img.display(window);
+            int idx = 0;
+            int x0 = windows[0]->window_x();
+            int y0 = windows[0]->window_y();
+            for (auto& window : windows)
+            {
+                if (window->is_keyESC()) running = false;
+                window->move(x0, y0 + idx * (window->window_height() + 30));
+                // Define colors used to plot the profile, and a hatch to draw the vertical line
+                unsigned int hatch = 0xF0F0F0F0;
+                const unsigned char
+                    red[] = { 122,0,0 },
+                    green[] = { 0,122,0 },
+                    blue[] = { 0,0,122 },
+                    black[] = { 0,0,0 };
+
+
+                const auto& info = gpuInfos[idx];
+                CImg<float> img1(info.metrics[METRIC_SM_SOL], GpuInfo::HISTORY_COUNT, 1);
+                CImg<float> img2(info.metrics[METRIC_MEM_SOL], GpuInfo::HISTORY_COUNT, 1);
+                CImg<float> img3(info.metrics[METRIC_FB_USAGE], GpuInfo::HISTORY_COUNT, 1);
+                int plotType = 1;
+                int vertexType = 1;
+                float alpha = 0.5f;
+                // Create and display the image of the intensity profile
+                CImg<unsigned char> img(window->width(), window->height(), 1, 3, 255);
+                img.
+                    draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, black, 0.2f, 0xCCCCCCCC, 0xCCCCCCCC).
+                    //draw_axes(0, window->width() - 1.0f, 255.0f, 0.0f, black).
+                    draw_graph(img1, red, alpha, plotType, vertexType, 100, 0).
+                    draw_graph(img2, green, alpha, plotType, vertexType, 100, 0).
+                    draw_graph(img3, blue, alpha, plotType, vertexType, 100, 0);
+
+                if (global_mouse_x >= 0 && global_mouse_y >= 0)
+                {
+                    auto value_idx = global_mouse_x / 2;
+                    img.draw_text(30, 5, " SM: %.1f%%\nMEM: %.1f%%\n FB: %.1f%%", black, 0, 1, 16,
+                        info.metrics[METRIC_SM_SOL][value_idx], info.metrics[METRIC_MEM_SOL][value_idx], info.metrics[METRIC_FB_USAGE][value_idx]);
+                    img.draw_line(global_mouse_x, 0, global_mouse_x, window->height() - 1, black, 0.5f, hatch = cimg::rol(hatch));
+                }
+                img.display(*window);
+                idx++;
+            }
         }
     }
     // Shutdown NVML
