@@ -51,6 +51,8 @@ enum MetricType
     METRIC_SM_SOL,
     METRIC_MEM_SOL,
     METRIC_FB_USAGE,
+    METRIC_NVENC_SOL,
+    METRIC_NVDEC_SOL,
     METRIC_SM_CLK,
     METRIC_MEM_CLK,
     METRIC_PCIE_TX,
@@ -58,6 +60,33 @@ enum MetricType
 
     METRIC_COUNT,
 };
+
+char* kMetricNames[] =
+{
+    "SM",
+    "MEM",
+    "FB",
+    "ENC",
+    "DEC",
+    "SM CLK",
+    "MEM CLK",
+    "PCIE TX",
+    "PCIE RX",
+};
+
+const uint8_t colors[][3] =
+{
+    { 0,0,0 },
+    { 255,0,0 },
+    { 0,255,0 },
+    { 0,0,255 },
+    { 122,122,122 },
+    { 122,122,122 },
+    { 122,122,122 },
+    { 122,122,122 },
+    { 122,122,122 },
+};
+
 
 struct GpuInfo
 {
@@ -298,6 +327,9 @@ int main(int argc, char* argv[])
             }
             else CHECK_NVML(nvRetValue, nvmlDeviceGetEncoderUtilization);
 
+            info.addMetric(METRIC_NVENC_SOL, uiVidEncoderUtil);
+            info.addMetric(METRIC_NVDEC_SOL, uiVidDecoderUtil);
+
             // Clock
             uint32_t clocks[NVML_CLOCK_COUNT];
             for (int i = 0; i < NVML_CLOCK_COUNT; i++)
@@ -381,35 +413,34 @@ int main(int argc, char* argv[])
                 window->move(x0, y0 + idx * (window->window_height() + 30));
                 // Define colors used to plot the profile, and a hatch to draw the vertical line
                 unsigned int hatch = 0xF0F0F0F0;
-                const unsigned char
-                    red[] = { 122,0,0 },
-                    green[] = { 0,122,0 },
-                    blue[] = { 0,0,122 },
-                    black[] = { 0,0,0 };
-
-
                 const auto& info = gpuInfos[idx];
-                CImg<float> img1(info.metrics[METRIC_SM_SOL], GpuInfo::HISTORY_COUNT, 1);
-                CImg<float> img2(info.metrics[METRIC_MEM_SOL], GpuInfo::HISTORY_COUNT, 1);
-                CImg<float> img3(info.metrics[METRIC_FB_USAGE], GpuInfo::HISTORY_COUNT, 1);
+
                 int plotType = 1;
                 int vertexType = 1;
                 float alpha = 0.5f;
                 // Create and display the image of the intensity profile
                 CImg<unsigned char> img(window->width(), window->height(), 1, 3, 255);
-                img.
-                    draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, black, 0.2f, 0xCCCCCCCC, 0xCCCCCCCC).
-                    //draw_axes(0, window->width() - 1.0f, 255.0f, 0.0f, black).
-                    draw_graph(img1, red, alpha, plotType, vertexType, 100, 0).
-                    draw_graph(img2, green, alpha, plotType, vertexType, 100, 0).
-                    draw_graph(img3, blue, alpha, plotType, vertexType, 100, 0);
+                img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
 
+                for (int k = METRIC_SM_SOL; k <= METRIC_NVDEC_SOL; k++)
+                {
+                    CImg<float> plot(info.metrics[k], GpuInfo::HISTORY_COUNT, 1);
+                    img.draw_graph(plot, colors[k], alpha, plotType, vertexType, 100, 0);
+                }
+
+                const int kFontHeight = 16;
                 if (global_mouse_x >= 0 && global_mouse_y >= 0)
                 {
                     auto value_idx = global_mouse_x / 2;
-                    img.draw_text(30, 5, " SM: %.1f%%\nMEM: %.1f%%\n FB: %.1f%%", black, 0, 1, 16,
-                        info.metrics[METRIC_SM_SOL][value_idx], info.metrics[METRIC_MEM_SOL][value_idx], info.metrics[METRIC_FB_USAGE][value_idx]);
-                    img.draw_line(global_mouse_x, 0, global_mouse_x, window->height() - 1, black, 0.5f, hatch = cimg::rol(hatch));
+                    for (int k = METRIC_SM_SOL; k <= METRIC_NVDEC_SOL; k++)
+                    {
+                        img.draw_text(30, 5 + k * kFontHeight,
+                            "%s: %.1f%%\n",
+                            colors[k], 0, 1, kFontHeight,
+                            kMetricNames[k],
+                            info.metrics[k][value_idx]);
+                    }
+                    img.draw_line(global_mouse_x, 0, global_mouse_x, window->height() - 1, colors[0], 0.5f, hatch = cimg::rol(hatch));
                 }
                 img.display(*window);
                 idx++;
