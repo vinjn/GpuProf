@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
- // nvmlquery.cpp : Demonstrate how to load the NVML API and query GPU utilization metrics
+#define _HAS_STD_BYTE 0
 
 #include <stdio.h>
 #include <stdint.h>
