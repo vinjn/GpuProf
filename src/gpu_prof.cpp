@@ -76,14 +76,14 @@ char* kMetricNames[] =
 
 const uint8_t colors[][3] =
 {
-    { 0,0,0 },
-    { 255,0,0 },
-    { 0,255,0 },
-    { 0,0,255 },
-    { 122,122,122 },
-    { 122,122,122 },
-    { 122,122,122 },
-    { 122,122,122 },
+    { 255,255,255 },
+    { 195,38,114 },
+    { 69,203,209},
+    { 138,226,36 },
+    { 174,122,169 },
+    { 200,122,10 },
+    { 122,200,10 },
+    { 10,122,200 },
     { 122,122,122 },
 };
 
@@ -419,7 +419,7 @@ int main(int argc, char* argv[])
                 int vertexType = 1;
                 float alpha = 0.5f;
                 // Create and display the image of the intensity profile
-                CImg<unsigned char> img(window->width(), window->height(), 1, 3, 255);
+                CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
                 img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
 
                 for (int k = METRIC_SM_SOL; k <= METRIC_NVDEC_SOL; k++)
