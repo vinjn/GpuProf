@@ -362,8 +362,8 @@ int main(int argc, char* argv[])
             if (info.bGPUUtilSupported) printf("\t%d\t%d", nvUtilData.gpu, nvUtilData.memory);
             else printf("\t-\t-");
             printf("\t%lld / %lld", ulFrameBufferUsedMBytes, ulFrameBufferTotalMBytes);
-            printf("\t%d\t%d", clocks[NVML_CLOCK_SM], clocks[NVML_CLOCK_MEM]);
-            printf("\t%-3d\t%-3d", pcieUtils[NVML_PCIE_UTIL_TX_BYTES] / 1024L, pcieUtils[NVML_PCIE_UTIL_RX_BYTES] / 1024L);
+            printf("\t%-5d\t%-6d", clocks[NVML_CLOCK_SM], clocks[NVML_CLOCK_MEM]);
+            printf("\t%-6d\t%-6d", pcieUtils[NVML_PCIE_UTIL_TX_BYTES] / 1024L, pcieUtils[NVML_PCIE_UTIL_RX_BYTES] / 1024L);
 
 #if 0
             if (bEncoderUtilSupported) printf("\t%d", uiVidEncoderUtil);
