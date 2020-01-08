@@ -23,7 +23,7 @@
  */
 
 #define _HAS_STD_BYTE 0
-
+#define GPU_PROF_VERSION "0.4"
 #include <stdio.h>
 #include <stdint.h>
 #include <vector>
@@ -186,10 +186,13 @@ int main(int argc, char* argv[])
     // Now that NVML has been initalized, before exiting normally or when handling 
     // an error condition, ensure nvmlShutdown() is called
 
-    // For each of the GPUs detected by NVML, query the device name, GPU, GPU memory, video encoder and decoder utilization
-
-    int cudaDriverVersion = 0;
-    nvRetValue = nvmlSystemGetCudaDriverVersion(&cudaDriverVersion);
+    char driverVersion[80];
+    nvRetValue = nvmlSystemGetDriverVersion(driverVersion, 80);
+    int cudaVersion = 0;
+    nvRetValue = nvmlSystemGetCudaDriverVersion(&cudaVersion);
+    printf("GpuProf %s from vinjn.com\n", GPU_PROF_VERSION);
+    printf("Driver Version: %s     CUDA Version: %d.%d\n", driverVersion, cudaVersion / 1000, cudaVersion - cudaVersion / 1000 * 1000);
+    printf("------------------------------------------------------------\n");
 
     // Get the number of GPUs
     uint32_t uiNumGPUs = 0;
@@ -215,8 +218,11 @@ int main(int argc, char* argv[])
         auto& info = gpuInfos[iDevIDX];
         nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &info.handle);
         CHECK_NVML(nvRetValue, nvmlDeviceGetHandleByIndex);
+
+        nvRetValue = nvmlDeviceSetAccountingMode(info.handle, NVML_FEATURE_ENABLED);
+
         printf("%d", iDevIDX);
-        nvmlDeviceGetPciInfo(info.handle, &info.pciInfo);
+        nvRetValue = nvmlDeviceGetPciInfo(info.handle, &info.pciInfo);
         CHECK_NVML(nvRetValue, nvmlDeviceGetPciInfo);
 
         // nvlink
@@ -252,7 +258,7 @@ int main(int argc, char* argv[])
         auto window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, info.cDevicename, 3);
         windows.push_back(window);
     }
-    printf("============================================================\n");
+    printf("------------------------------------------------------------\n");
   
     // Print out a header for the utilization output
     printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX");
@@ -272,7 +278,7 @@ int main(int argc, char* argv[])
         for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
         {
             auto& info = gpuInfos[iDevIDX];
-            GoToXY(0, iDevIDX + 2 + uiNumGPUs + 2);
+            GoToXY(0, iDevIDX + 4 + uiNumGPUs + 2);
             // Get the GPU device handle
             nvmlDevice_t handle = info.handle;
 
@@ -376,6 +382,34 @@ int main(int argc, char* argv[])
 
             }
         }
+
+        // Per-process info
+        for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
+        {
+            auto& info = gpuInfos[iDevIDX];
+            // Get the GPU device handle
+            nvmlDevice_t handle = info.handle;
+            nvmlEnableState_t mode;
+            nvmlReturn_t ret = nvmlDeviceGetAccountingMode(handle, &mode);
+            if (mode == NVML_FEATURE_DISABLED)
+                continue;
+
+            unsigned int pidCount = 0;
+            ret = nvmlDeviceGetAccountingPids(handle, &pidCount, nullptr);
+            if (pidCount > 0)
+            {
+                vector<unsigned int> pids(pidCount);
+                ret = nvmlDeviceGetAccountingPids(handle, &pidCount, pids.data());
+                CHECK_NVML(ret, nvmlDeviceGetAccountingPids);
+                for (auto pid : pids)
+                {
+                    nvmlAccountingStats_t stats;
+                    ret = nvmlDeviceGetAccountingStats(handle, pid, &stats);
+                    CHECK_NVML(ret, nvmlDeviceGetAccountingStats);
+                }
+            }
+        }
+
         // GUI
 #ifdef WIN32_WITH_THIS
         SHORT state = GetAsyncKeyState(VK_SPACE);
