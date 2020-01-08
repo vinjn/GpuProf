@@ -1,1 +1,2 @@
 "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\amd64\MSBuild.exe" build\gpuprof.sln /p:Configuration=Release /m /verbosity:quiet
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\amd64\MSBuild.exe" build\gpuprof.sln /p:Configuration=Release /m /verbosity:quiet
