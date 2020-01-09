@@ -278,7 +278,7 @@ int main(int argc, char* argv[])
         for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
         {
             auto& info = gpuInfos[iDevIDX];
-            GoToXY(0, iDevIDX + 4 + uiNumGPUs + 2);
+            GoToXY(0, iDevIDX + 5 + uiNumGPUs + 2);
             // Get the GPU device handle
             nvmlDevice_t handle = info.handle;
 
