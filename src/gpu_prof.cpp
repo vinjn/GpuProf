@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
                 unsigned int reset = 1;
                 nvmlNvLinkUtilizationControl_t control = { NVML_NVLINK_COUNTER_UNIT_BYTES, NVML_NVLINK_COUNTER_PKTFILTER_ALL };
                 nvRetValue = nvmlDeviceSetNvLinkUtilizationControl(info.handle, j, counter, &control, reset);
-                CHECK_NVML(nvRetValue, nvmlDeviceSetNvLinkUtilizationControl);
+                //CHECK_NVML(nvRetValue, nvmlDeviceSetNvLinkUtilizationControl);
             }
         }
 
