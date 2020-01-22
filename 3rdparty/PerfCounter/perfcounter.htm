@@ -1,0 +1,126 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>CPerfCounter v1.04</title>
+<link rel="stylesheet" type="text/css" href="./naughter.css">
+</head>
+
+<body>
+
+<h2>CPerfCounter v1.04</h2>
+
+<p>Welcome to CPerformanceCounter, A freeware C++ class which encapsulates the 
+performance counters API of Windows. The performance counter API on Windows is 
+composed of the SDK calls &quot;QueryPerformanceFrequency&quot; and &quot;QueryPerformanceCounter&quot;. 
+These two methods provide a high frequency counter value (normally with a single 
+digit Megahertz frequency), which is synchronized across CPU cores. This is the 
+official way to implement high performance timers on Windows. Other approaches 
+such as the Pentium assembly language instruction of &quot;RDTSC&quot; are available 
+(wrapped by the <a href="http://www.naughter.com/cputicker.html">CCPUTicker</a> 
+class of the author) but the frequency of this counter can change as the 
+frequency of a CPU is changed based on technologies such as Intel SpeedStep. 
+Also on modern CPUs different cores can be slowed down individually meaning that 
+the value you get back can become inconsistent if your code is migrated from 
+core to core as it runs. This simple class avoids these issues while still 
+providing a simple and high speed API.</p>
+
+<p>
+&nbsp;</p>
+
+<table border="0">
+<TBODY>
+  <tr>
+    <td><a href="#Usage">Usage</a></td>
+  </tr>
+  <tr>
+    <td><a href="#Copyright">Copyright</a></td>
+  </tr>
+  <tr>
+    <td><a href="#History">History</a></td>
+  </tr>
+  <tr>
+    <td><a href="#Contact">Contacting the Author</a></td>
+  </tr>
+</TBODY>
+</table>
+
+<p>&nbsp;</p>
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+<h2><a name="Usage"></a>
+Usage</h2>
+
+<ul>
+	<li>To use CPerformanceCounter in your project simply #include &quot;PerfCounter.h&quot; 
+in whichever files you want to use the class in. Then create an instance of 
+	CPerformanceCounter and call its methods as required.</li>
+	<li>The class is only supported on VC 2017 or later.</li>
+	<li>Included in the download is a VC 2017 console application which 
+demonstrates all of the class methods around a call to &quot;Sleep(1000)&quot;.</li>
+</ul>
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+<h2><b><a name="Copyright"></a>Copyright</b></h2>
+<ul>
+  <li>You are allowed to include the source code in any product (commercial, 
+	shareware, freeware or otherwise) when your product is released in binary 
+	form.</li>
+  <li>You are allowed to modify the source code in any way you want except you 
+	cannot modify the copyright details at the top of each module.</li>
+  <li>If you want to distribute source code with your application, then you are 
+	only allowed to distribute versions released by the author. This is to 
+	maintain a single distribution point for the source code.</li>
+</ul>
+
+<p>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+<p>&nbsp;</p>
+
+<h2><a name="History"></a>
+History</h2>
+
+<p><b>V1.04 (2 June 2019)</b></p>
+<ul>
+	<li>Updated copyright details </li>
+	<li>Updated the code to clean compile on VC 2019 </li>
+</ul>
+<p><b>V1.03 (19 August 2018)</b></p>
+<ul>
+	<li>Updated copyright details. </li>
+	<li>Fixed a number of C++ core guidelines compiler warnings. These changes 
+	mean that the code will now only compile on VC 2017 or later. </li>
+</ul>
+<p><b>V1.02 (2 January 2016)</b></p>
+<ul>
+	<li>Updated copyright details. </li>
+	<li>Verified the code compiles cleanly on VC 2015. </li>
+</ul>
+<p><b>V1.01 (5 April 2015)</b></p>
+<ul>
+  <li>Updated copyright details. </li>
+</ul>
+<p><b>V1.0 (30 March 2010)</b></p>
+<ul>
+  <li>Initial Public release</li>
+</ul>
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+<h2><a name="Contact"></a>Contacting the Author</h2>
+
+<p>PJ Naughter<br>
+Email: <a href="mailto:pjna@naughter.com">pjna@naughter.com</a><br>
+Web: <a href="http://www.naughter.com">http://www.naughter.com</a><br>
+2 June 2019</p>
+</body>
+</html>
