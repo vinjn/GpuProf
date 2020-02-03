@@ -23,7 +23,7 @@
  */
 
 #define _HAS_STD_BYTE 0
-#define GPU_PROF_VERSION "0.4"
+#define GPU_PROF_VERSION "0.5"
 #include <stdio.h>
 #include <stdint.h>
 #include <vector>
@@ -57,7 +57,8 @@ enum MetricType
     METRIC_MEM_CLK,
     METRIC_PCIE_TX,
     METRIC_PCIE_RX,
-    METRIC_NVLINK_SPEED,
+    METRIC_NVLINK_TX,
+    METRIC_NVLINK_RX,
 
     METRIC_COUNT,
 };
@@ -73,6 +74,8 @@ char* kMetricNames[] =
     "MEM CLK",
     "PCIE TX",
     "PCIE RX",
+    "NVLK TX",
+    "NVLK RX",
 };
 
 const uint8_t colors[][3] =
@@ -86,6 +89,8 @@ const uint8_t colors[][3] =
     { 122,200,10 },
     { 10,122,200 },
     { 122,122,122 },
+    { 200,122,10 },
+    { 10,122,200 },
 };
 
 
@@ -97,7 +102,7 @@ struct GpuInfo
     char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
     uint32_t numLinks;
     nvmlEnableState_t nvlinkActives[NVML_NVLINK_MAX_LINKS];
-    uint32_t nvlinkSpeeds[NVML_NVLINK_MAX_LINKS];
+    uint32_t nvlinkMaxSpeeds[NVML_NVLINK_MAX_LINKS];
     nvmlPciInfo_t nvlinkPciInfos[NVML_NVLINK_MAX_LINKS];
 
     // Flags to denote unsupported queries
@@ -234,7 +239,7 @@ int main(int argc, char* argv[])
             bNVLinkSupported = true;
             nvmlDeviceGetNvLinkState(info.handle, j, &info.nvlinkActives[j]);
             nvmlDeviceGetNvLinkRemotePciInfo(info.handle, j, &info.nvlinkPciInfos[j]);
-            getUInt(info.handle, NVML_FI_DEV_NVLINK_SPEED_MBPS_L0 + j, &info.nvlinkSpeeds[j]);
+            getUInt(info.handle, NVML_FI_DEV_NVLINK_SPEED_MBPS_L0 + j, &info.nvlinkMaxSpeeds[j]);
 
             for (int counter = 0; counter < 2; counter++)
             {
@@ -264,11 +269,11 @@ int main(int argc, char* argv[])
     // Print out a header for the utilization output
     printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX");
     if (bNVLinkSupported)
-        printf("\tNVLINK");
+        printf("\tNVLK-TX\tNVLK-RX");
     printf("\n");
     printf("#id\t%%\t%%\tUsed / All\tMHz\tMHz\tMB\tMB");
     if (bNVLinkSupported)
-        printf("\tMB");
+        printf("\tMB\tMB");
     printf("\n");
 
     bool running = true;
@@ -383,9 +388,16 @@ int main(int argc, char* argv[])
             {
                 //for (int j = 0; j < info.numLinks; j++)
                 int j = 0;
-                uint32_t nvlinkSpeed = 0;
-                printf("\t%-5d", nvlinkSpeed);
-                info.addMetric(METRIC_NVLINK_SPEED, nvlinkSpeed);
+                uint32_t counter = 0;
+                uint64_t rxcounter = 0;
+                uint64_t txcounter = 0;
+                nvRetValue = nvmlDeviceGetNvLinkUtilizationCounter(info.handle, j, counter, &rxcounter, &txcounter);
+                CHECK_NVML(nvRetValue, nvmlDeviceGetNvLinkUtilizationCounter);
+                rxcounter /= 1024L;
+                txcounter /= 1024L;
+                printf("\t%-5d\t%-5d", txcounter, rxcounter);
+                info.addMetric(METRIC_NVLINK_TX, txcounter);
+                info.addMetric(METRIC_NVLINK_RX, rxcounter);
             }
         }
 
