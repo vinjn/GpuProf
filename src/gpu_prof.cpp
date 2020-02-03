@@ -57,6 +57,7 @@ enum MetricType
     METRIC_MEM_CLK,
     METRIC_PCIE_TX,
     METRIC_PCIE_RX,
+    METRIC_NVLINK_SPEED,
 
     METRIC_COUNT,
 };
@@ -232,8 +233,8 @@ int main(int argc, char* argv[])
         {
             bNVLinkSupported = true;
             nvmlDeviceGetNvLinkState(info.handle, j, &info.nvlinkActives[j]);
-            getUInt(info.handle, NVML_FI_DEV_NVLINK_SPEED_MBPS_L0 + j, &info.nvlinkSpeeds[j]);
             nvmlDeviceGetNvLinkRemotePciInfo(info.handle, j, &info.nvlinkPciInfos[j]);
+            getUInt(info.handle, NVML_FI_DEV_NVLINK_SPEED_MBPS_L0 + j, &info.nvlinkSpeeds[j]);
 
             for (int counter = 0; counter < 2; counter++)
             {
@@ -263,11 +264,11 @@ int main(int argc, char* argv[])
     // Print out a header for the utilization output
     printf("GPU\tSM\tMEM\tFBuffer(MB)\tSM-CLK\tMEM-CLK\tPCIE-TX\tPCIE-RX");
     if (bNVLinkSupported)
-        printf("\tNVL-TX\tNVL-RX");
+        printf("\tNVLINK");
     printf("\n");
     printf("#id\t%%\t%%\tUsed / All\tMHz\tMHz\tMB\tMB");
     if (bNVLinkSupported)
-        printf("\tMB\tMB");
+        printf("\tMB");
     printf("\n");
 
     bool running = true;
@@ -377,9 +378,14 @@ int main(int argc, char* argv[])
             if (bDecoderUtilSupported) printf("\t%d", uiVidDecoderUtil);
             else printf("\t-");
 #endif
+            //if (bNVLinkSupported)
             if (info.nvlinkActives[0])
             {
-
+                //for (int j = 0; j < info.numLinks; j++)
+                int j = 0;
+                uint32_t nvlinkSpeed = 0;
+                printf("\t%-5d", nvlinkSpeed);
+                info.addMetric(METRIC_NVLINK_SPEED, nvlinkSpeed);
             }
         }
 
