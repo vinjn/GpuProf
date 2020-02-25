@@ -112,8 +112,13 @@ struct GpuInfo
 
     static const int HISTORY_COUNT = WINDOW_W / 2;
     float metrics[METRIC_COUNT][HISTORY_COUNT] = {};
+    float metrics_sum[METRIC_COUNT] = {};
+    float metrics_avg[METRIC_COUNT] = {};
     void addMetric(MetricType type, float value)
     {
+        metrics_sum[type] -= metrics[type][0];
+        metrics_sum[type] += value;
+        metrics_avg[type] = metrics_sum[type] / HISTORY_COUNT;
         for (int i = 0; i < HISTORY_COUNT - 1; i++)
             metrics[type][i] = metrics[type][i + 1];
         metrics[type][HISTORY_COUNT - 1] = value;
@@ -481,12 +486,22 @@ int main(int argc, char* argv[])
                 }
 
                 const int kFontHeight = 16;
+                // avg legends are always visible
+                for (int k = METRIC_SM_SOL; k <= METRIC_NVDEC_SOL; k++)
+                {
+                    img.draw_text(kFontHeight, kFontHeight * (k + 1),
+                        "avg %s: %.1f%%\n",
+                        colors[k], 0, 1, kFontHeight,
+                        kMetricNames[k],
+                        info.metrics_avg[k]);
+                }
+
                 if (global_mouse_x >= 0 && global_mouse_y >= 0)
                 {
                     auto value_idx = global_mouse_x / 2;
                     for (int k = METRIC_SM_SOL; k <= METRIC_NVDEC_SOL; k++)
                     {
-                        img.draw_text(30, 5 + k * kFontHeight,
+                        img.draw_text(window->window_width() - 100, kFontHeight* (k + 1),
                             "%s: %.1f%%\n",
                             colors[k], 0, 1, kFontHeight,
                             kMetricNames[k],
