@@ -129,6 +129,45 @@ vector<GpuInfo> gpuInfos;
 
 #ifdef WIN32
 #include <Windows.h>
+
+#if 0
+#include "C:/Program Files (x86)/Windows Kits/10/Include/10.0.18362.0/km/d3dkmthk.h"
+
+DWORD WINAPI vsyncThread(LPVOID lpParam) {
+    printf("+vsyncThread()\n");
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+    LPFND3DKMT_OPENADAPTERFROMHDC lpfnKTOpenAdapterFromHdc = (LPFND3DKMT_OPENADAPTERFROMHDC)fnBind("gdi32", "D3DKMTOpenAdapterFromHdc");
+    LPFND3DKMT_WAITFORVERTICALBLANKEVENT lpfnKTWaitForVerticalBlankEvent = (LPFND3DKMT_WAITFORVERTICALBLANKEVENT)fnBind("gdi32", "D3DKMTWaitForVerticalBlankEvent");
+    if (lpfnKTOpenAdapterFromHdc && lpfnKTWaitForVerticalBlankEvent) {
+        D3DKMT_WAITFORVERTICALBLANKEVENT we;
+        bool bBound = false;
+        while (bRunningTests) {
+            if (!bBound) {
+                D3DKMT_OPENADAPTERFROMHDC oa;
+                oa.hDc = GetDC(NULL);  // NULL = primary display monitor; NOT tested with multiple monitor setup; tested/works with hAppWnd
+                bBound = (S_OK == (*lpfnKTOpenAdapterFromHdc)(&oa));
+                if (bBound) {
+                    we.hAdapter = oa.hAdapter;
+                    we.hDevice = 0;
+                    we.VidPnSourceId = oa.VidPnSourceId;
+                }
+            }
+            if (bBound && (S_OK == (*lpfnKTWaitForVerticalBlankEvent)(&we))) {
+                vsyncHaveNewTimingInfo(tick());
+                vsyncSignalAllWaiters();
+            }
+            else {
+                bBound = false;
+                printf("*** vsync service in recovery mode...\n");
+                Sleep(1000);
+            }
+        }
+    }
+    printf("-vsyncThread()\n");
+    return 0;
+}
+#endif
+
 void GoToXY(int column, int line)
 {
     // Create a COORD structure and fill in its members.
