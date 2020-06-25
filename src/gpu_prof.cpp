@@ -436,6 +436,10 @@ int main(int argc, char* argv[])
                 uint64_t rxcounter = 0;
                 uint64_t txcounter = 0;
                 nvRetValue = nvmlDeviceGetNvLinkUtilizationCounter(info.handle, j, counter, &rxcounter, &txcounter);
+                if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
+                {
+                }
+                else
                 CHECK_NVML(nvRetValue, nvmlDeviceGetNvLinkUtilizationCounter);
                 rxcounter /= 1024L;
                 txcounter /= 1024L;
