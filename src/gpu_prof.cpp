@@ -605,6 +605,10 @@ void draw()
 // Application entry point
 int main(int argc, char* argv[])
 {
+#if 0
+    intel_prof_main(0, NULL);
+#endif
+
     printf("GpuProf %s from vinjn.com\n", GPU_PROF_VERSION);
 
     nvmlReturn_t nvRetValue = NVML_ERROR_UNINITIALIZED;
