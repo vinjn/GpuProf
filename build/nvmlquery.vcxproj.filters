@@ -6,8 +6,94 @@
     <ClInclude Include="..\src\nvidia_prof.h" />
     <ClInclude Include="..\3rdparty\CUDA_SDK\nvml.h" />
     <ClInclude Include="..\3rdparty\CImg.h" />
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\inc\common\instrumentation\api\instr_gt_driver_ifc.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\inc\common\instrumentation\api\metrics_discovery_api.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\inc\common\instrumentation\api\metrics_discovery_internal_api.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_calculation.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_driver_ifc.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_exports.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_internal.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_per_platform_preamble.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_types.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\common\inc\iu_debug.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\common\inc\iu_std.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\linux\inc\iu_i915_perf.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\linux\inc\iu_os.h">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\source\metrics_discovery_helper.h">
+      <Filter>MetricsDiscoveryHelper\helper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\source\metrics_discovery_helper_dx11.h">
+      <Filter>MetricsDiscoveryHelper\helper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpu_prof.cpp" />
+    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\md_calculation.cpp">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\common\iu_debug.c">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\win\iu_os.cpp">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\win\iu_std.cpp">
+      <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\context.cpp">
+      <Filter>MetricsDiscoveryHelper\helper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\equations.cpp">
+      <Filter>MetricsDiscoveryHelper\helper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\periodic_metrics.cpp">
+      <Filter>MetricsDiscoveryHelper\helper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\range_metrics_dx11.cpp">
+      <Filter>MetricsDiscoveryHelper\helper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\report_memory.cpp">
+      <Filter>MetricsDiscoveryHelper\helper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\values.cpp">
+      <Filter>MetricsDiscoveryHelper\helper</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="MetricsDiscoveryHelper">
+      <UniqueIdentifier>{f2a70f1a-724e-4145-b46a-b11ea143ece9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MetricsDiscoveryHelper\metrics-discovery">
+      <UniqueIdentifier>{7841d5e8-5280-413b-a5ed-16a7bf5e5734}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MetricsDiscoveryHelper\helper">
+      <UniqueIdentifier>{aca71ae1-3328-42f6-9b5f-b6247c40c425}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
