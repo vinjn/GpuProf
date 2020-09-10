@@ -209,6 +209,8 @@ struct GpuInfo
     bool bGPUUtilSupported = true;
     bool bEncoderUtilSupported = true;
     bool bDecoderUtilSupported = true;
+    
+    nvmlEnableState_t bMonitorConnected = NVML_FEATURE_DISABLED;
 
     static const int HISTORY_COUNT = WINDOW_W / 2;
     float metrics[METRIC_COUNT][HISTORY_COUNT] = {};
@@ -297,6 +299,9 @@ int setup()
         printf("%d", iDevIDX);
         nvRetValue = nvmlDeviceGetPciInfo(info.handle, &info.pciInfo);
         CHECK_NVML(nvRetValue, nvmlDeviceGetPciInfo);
+
+        nvRetValue = nvmlDeviceGetDisplayMode(info.handle, &info.bMonitorConnected);
+        CHECK_NVML(nvRetValue, nvmlDeviceGetDisplayMode);
 
         // nvlink
         getUInt(info.handle, NVML_FI_DEV_NVLINK_LINK_COUNT, &info.numLinks);
@@ -438,7 +443,7 @@ int update()
         // Output the utilization results depending on which of the counters has data available
         // I have opted to display "-" to denote an unsupported value rather than simply display "0"
         // to clarify that the GPU/driver does not support the query. 
-        printf("%d", iDevIDX);
+        printf("%d %s", iDevIDX, info.bMonitorConnected ? "<-" : "");
 
         if (info.bGPUUtilSupported) printf("\t%d\t%d", nvUtilData.gpu, nvUtilData.memory);
         else printf("\t-\t-");
