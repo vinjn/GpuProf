@@ -258,9 +258,14 @@ int setup()
 {
     char driverVersion[80];
     int cudaVersion = 0;
+    char nvmlVersion[80];
     auto nvRetValue = nvmlSystemGetDriverVersion(driverVersion, 80);
     nvRetValue = nvmlSystemGetCudaDriverVersion(&cudaVersion);
-    printf("Driver Version: %s     CUDA Version: %d.%d\n", driverVersion, cudaVersion / 1000, cudaVersion - cudaVersion / 1000 * 1000);
+    nvRetValue = nvmlSystemGetNVMLVersion(nvmlVersion, 80);
+    printf("Driver: %s     CUDA: %d.%d      NVML: %s\n", 
+        driverVersion,
+        NVML_CUDA_DRIVER_VERSION_MAJOR(cudaVersion), NVML_CUDA_DRIVER_VERSION_MINOR(cudaVersion),
+        nvmlVersion);
     printf("------------------------------------------------------------\n");
 
     // Get the number of GPUs
@@ -475,8 +480,33 @@ int update()
         auto& info = gpuInfos[iDevIDX];
         // Get the GPU device handle
         nvmlDevice_t handle = info.handle;
+
+        nvmlReturn_t ret;
+#if 0
+        // nvmlDeviceGetGraphicsRunningProcesses and nvmlDeviceGetComputeRunningProcesses gives wrong results
+        {
+            unsigned int infoCount = 0;
+            ret = nvmlDeviceGetGraphicsRunningProcesses(handle, &infoCount, nullptr);
+            if (ret == NVML_ERROR_INSUFFICIENT_SIZE || ret == NVML_SUCCESS)
+            {
+                vector<nvmlProcessInfo_t> infos(infoCount);
+                ret = nvmlDeviceGetGraphicsRunningProcesses(handle, &infoCount, infos.data());
+                int a = 0;
+            }
+        }
+        {
+            unsigned int infoCount = 0;
+            ret = nvmlDeviceGetComputeRunningProcesses(handle, &infoCount, nullptr);
+            if (ret == NVML_ERROR_INSUFFICIENT_SIZE || ret == NVML_SUCCESS)
+            {
+                vector<nvmlProcessInfo_t> infos(infoCount);
+                ret = nvmlDeviceGetComputeRunningProcesses(handle, &infoCount, infos.data());
+                int a = 0;
+            }
+        }
+#endif
         nvmlEnableState_t mode;
-        nvmlReturn_t ret = nvmlDeviceGetAccountingMode(handle, &mode);
+        ret = nvmlDeviceGetAccountingMode(handle, &mode);
         if (mode == NVML_FEATURE_DISABLED)
             continue;
 
@@ -495,6 +525,10 @@ int update()
                 CHECK_NVML(ret, nvmlDeviceGetAccountingStats);
                 if (gpuStats.isRunning && (gpuStats.gpuUtilization > 0 || gpuStats.memoryUtilization > 0))
                 {
+#if 0
+                    char name[80];
+                    nvmlSystemGetProcessName(pid, name, 80);
+#endif
                     auto cpuStats = getEntryFromPID(pid);
                     auto p = ProcessInfo();
                     p.pid = pid;
