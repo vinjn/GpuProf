@@ -17,7 +17,16 @@ bool LoadNVML()
 	// Load the NVML DLL using the default NVML DLL install path
 // NOTE: This DLL is included in the NVIDIA driver installation by default
 	HINSTANCE hDLLhandle = NULL;
-	hDLLhandle = LoadLibraryA(NVMLQUERY_DEFAULT_NVML_DLL_PATH);
+	const char* nvmlFilenames[] =
+	{
+		"C:\\Program Files\\NVIDIA Corporation\\NVSMI\\NVML.DLL",
+		"C:\\Windows\\System32\\nvml.dll"
+	};
+	for (auto file : nvmlFilenames)
+	{
+		hDLLhandle = LoadLibraryA(file);
+		if (hDLLhandle) break;
+	}
 
 	// if the DLL can not be found, exit
 	if (NULL == hDLLhandle)
