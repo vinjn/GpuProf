@@ -235,7 +235,7 @@ vector<GpuInfo> gpuInfos;
                 if (nvRetValue != NVML_ERROR_NO_PERMISSION) \
                 { \
                     ShowErrorDetails(nvRetValue, #func); \
-                    nvmlShutdown(); \
+                    _nvmlShutdown(); \
                     return -1; \
                 } \
             }
@@ -245,7 +245,7 @@ int getUInt(nvmlDevice_t device, int fieldId, uint32_t* value)
     nvmlFieldValue_t fieldValue = {};
     fieldValue.fieldId = fieldId;
     nvmlReturn_t nvRetValue = NVML_ERROR_UNKNOWN;
-    nvRetValue = nvmlDeviceGetFieldValues(device, 1, &fieldValue);
+    nvRetValue = _nvmlDeviceGetFieldValues(device, 1, &fieldValue);
     *value = 0;
     CHECK_NVML(nvRetValue, nvmlDeviceGetFieldValues);
     *value = fieldValue.value.uiVal;
@@ -261,9 +261,9 @@ int setup()
     char driverVersion[80];
     int cudaVersion = 0;
     char nvmlVersion[80];
-    auto nvRetValue = nvmlSystemGetDriverVersion(driverVersion, 80);
-    nvRetValue = nvmlSystemGetCudaDriverVersion(&cudaVersion);
-    nvRetValue = nvmlSystemGetNVMLVersion(nvmlVersion, 80);
+    auto nvRetValue = _nvmlSystemGetDriverVersion(driverVersion, 80);
+    nvRetValue = _nvmlSystemGetCudaDriverVersion(&cudaVersion);
+    nvRetValue = _nvmlSystemGetNVMLVersion(nvmlVersion, 80);
     printf("Driver: %s     CUDA: %d.%d      NVML: %s\n", 
         driverVersion,
         NVML_CUDA_DRIVER_VERSION_MAJOR(cudaVersion), NVML_CUDA_DRIVER_VERSION_MINOR(cudaVersion),
@@ -271,14 +271,14 @@ int setup()
     printf("------------------------------------------------------------\n");
 
     // Get the number of GPUs
-    nvRetValue = nvmlDeviceGetCount(&uiNumGPUs);
+    nvRetValue = _nvmlDeviceGetCount_v2(&uiNumGPUs);
     CHECK_NVML(nvRetValue, nvmlDeviceGetCount);
 
     // In the case that no GPUs were detected
     if (0 == uiNumGPUs)
     {
         printf("No NVIDIA GPUs were detected.\n");
-        nvmlShutdown();
+        _nvmlShutdown();
         return -1;
     }
 
@@ -291,17 +291,17 @@ int setup()
     for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
     {
         auto& info = gpuInfos[iDevIDX];
-        nvRetValue = nvmlDeviceGetHandleByIndex(iDevIDX, &info.handle);
+        nvRetValue = _nvmlDeviceGetHandleByIndex_v2(iDevIDX, &info.handle);
         CHECK_NVML(nvRetValue, nvmlDeviceGetHandleByIndex);
 
-        nvRetValue = nvmlDeviceSetAccountingMode(info.handle, NVML_FEATURE_ENABLED);
+        nvRetValue = _nvmlDeviceSetAccountingMode(info.handle, NVML_FEATURE_ENABLED);
 
         printf("%d", iDevIDX);
-        nvRetValue = nvmlDeviceGetPciInfo(info.handle, &info.pciInfo);
+        nvRetValue = _nvmlDeviceGetPciInfo_v3(info.handle, &info.pciInfo);
         CHECK_NVML(nvRetValue, nvmlDeviceGetPciInfo);
 
-        nvRetValue = nvmlDeviceGetDisplayMode(info.handle, &info.bMonitorConnected);
-        CHECK_NVML(nvRetValue, nvmlDeviceGetDisplayMode);
+        nvRetValue = _nvmlDeviceGetDisplayMode(info.handle, &info.bMonitorConnected);
+        //CHECK_NVML(nvRetValue, nvmlDeviceGetDisplayMode);
 
         // nvlink
         getUInt(info.handle, NVML_FI_DEV_NVLINK_LINK_COUNT, &info.numLinks);
@@ -309,27 +309,27 @@ int setup()
         for (int j = 0; j < info.numLinks; j++)
         {
             bNVLinkSupported = true;
-            nvmlDeviceGetNvLinkState(info.handle, j, &info.nvlinkActives[j]);
-            nvmlDeviceGetNvLinkRemotePciInfo(info.handle, j, &info.nvlinkPciInfos[j]);
+            _nvmlDeviceGetNvLinkState(info.handle, j, &info.nvlinkActives[j]);
+            _nvmlDeviceGetNvLinkRemotePciInfo_v2(info.handle, j, &info.nvlinkPciInfos[j]);
             getUInt(info.handle, NVML_FI_DEV_NVLINK_SPEED_MBPS_L0 + j, &info.nvlinkMaxSpeeds[j]);
 
             for (int counter = 0; counter < 2; counter++)
             {
                 unsigned int reset = 1;
                 nvmlNvLinkUtilizationControl_t control = { NVML_NVLINK_COUNTER_UNIT_BYTES, NVML_NVLINK_COUNTER_PKTFILTER_ALL };
-                nvRetValue = nvmlDeviceSetNvLinkUtilizationControl(info.handle, j, counter, &control, reset);
+                nvRetValue = _nvmlDeviceSetNvLinkUtilizationControl(info.handle, j, counter, &control, reset);
                 //CHECK_NVML(nvRetValue, nvmlDeviceSetNvLinkUtilizationControl);
             }
         }
 
         // Get driver mode, WDDM or TCC?
-        nvRetValue = nvmlDeviceGetDriverModel(info.handle, &info.driverModel, &info.pendingDriverModel);
+        nvRetValue = _nvmlDeviceGetDriverModel(info.handle, &info.driverModel, &info.pendingDriverModel);
         CHECK_NVML(nvRetValue, nvmlDeviceGetDriverModel);
         static char* driverModelsString[] = { "WDDM", "TCC", "N/A" };
         printf("\t%s", driverModelsString[info.driverModel]);
 
         // Get the device name
-        nvRetValue = nvmlDeviceGetName(info.handle, info.cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
+        nvRetValue = _nvmlDeviceGetName(info.handle, info.cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
         CHECK_NVML(nvRetValue, nvmlDeviceGetName);
         printf("\t%s\n", info.cDevicename);
 
@@ -364,7 +364,7 @@ int update()
 
         // NOTE: nvUtil.memory is the memory controller utilization not the frame buffer utilization
         nvmlUtilization_t nvUtilData;
-        nvRetValue = nvmlDeviceGetUtilizationRates(handle, &nvUtilData);
+        nvRetValue = _nvmlDeviceGetUtilizationRates(handle, &nvUtilData);
         if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
         {
             info.bGPUUtilSupported = false;
@@ -373,14 +373,14 @@ int update()
 
         // Get the GPU frame buffer memory information
         nvmlMemory_t GPUmemoryInfo = {};
-        nvRetValue = nvmlDeviceGetMemoryInfo(handle, &GPUmemoryInfo);
+        nvRetValue = _nvmlDeviceGetMemoryInfo(handle, &GPUmemoryInfo);
         CHECK_NVML(nvRetValue, nvmlDeviceGetMemoryInfo);
 
         // verify that the uint64_t to unsigned long cast will not result in lost data
         if (ULLONG_MAX < GPUmemoryInfo.total)
         {
             printf("ERROR: GPU memory size exceeds variable limit\n");
-            nvmlShutdown();
+            _nvmlShutdown();
             return NVML_ERROR_NOT_SUPPORTED;
         }
 
@@ -396,7 +396,7 @@ int update()
         // Get the video encoder utilization (where supported)
         uint32_t uiVidEncoderUtil = 0u;
         uint32_t uiVideEncoderLastSample = 0u;
-        nvRetValue = nvmlDeviceGetEncoderUtilization(handle, &uiVidEncoderUtil, &uiVideEncoderLastSample);
+        nvRetValue = _nvmlDeviceGetEncoderUtilization(handle, &uiVidEncoderUtil, &uiVideEncoderLastSample);
         if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
         {
             info.bEncoderUtilSupported = false;
@@ -406,7 +406,7 @@ int update()
         // Get the video decoder utilization (where supported)
         uint32_t uiVidDecoderUtil = 0u;
         uint32_t uiVidDecoderLastSample = 0u;
-        nvRetValue = nvmlDeviceGetDecoderUtilization(handle, &uiVidDecoderUtil, &uiVidDecoderLastSample);
+        nvRetValue = _nvmlDeviceGetDecoderUtilization(handle, &uiVidDecoderUtil, &uiVidDecoderLastSample);
         if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
         {
             info.bDecoderUtilSupported = false;
@@ -420,7 +420,7 @@ int update()
         uint32_t clocks[NVML_CLOCK_COUNT];
         for (int i = 0; i < NVML_CLOCK_COUNT; i++)
         {
-            nvRetValue = nvmlDeviceGetClockInfo(handle, nvmlClockType_t(i), clocks + i);
+            nvRetValue = _nvmlDeviceGetClockInfo(handle, nvmlClockType_t(i), clocks + i);
             if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
 
@@ -432,7 +432,7 @@ int update()
         uint32_t pcieUtils[NVML_PCIE_UTIL_COUNT];
         for (int i = 0; i < NVML_PCIE_UTIL_COUNT; i++)
         {
-            nvRetValue = nvmlDeviceGetPcieThroughput(handle, nvmlPcieUtilCounter_t(i), pcieUtils + i);
+            nvRetValue = _nvmlDeviceGetPcieThroughput(handle, nvmlPcieUtilCounter_t(i), pcieUtils + i);
             if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
 
@@ -465,7 +465,7 @@ int update()
             uint32_t counter = 0;
             uint64_t rxcounter = 0;
             uint64_t txcounter = 0;
-            nvRetValue = nvmlDeviceGetNvLinkUtilizationCounter(info.handle, j, counter, &rxcounter, &txcounter);
+            nvRetValue = _nvmlDeviceGetNvLinkUtilizationCounter(info.handle, j, counter, &rxcounter, &txcounter);
             if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
             {
             }
@@ -491,42 +491,42 @@ int update()
         // nvmlDeviceGetGraphicsRunningProcesses and nvmlDeviceGetComputeRunningProcesses gives wrong results
         {
             unsigned int infoCount = 0;
-            ret = nvmlDeviceGetGraphicsRunningProcesses(handle, &infoCount, nullptr);
+            ret = _nvmlDeviceGetGraphicsRunningProcesses(handle, &infoCount, nullptr);
             if (ret == NVML_ERROR_INSUFFICIENT_SIZE || ret == NVML_SUCCESS)
             {
                 vector<nvmlProcessInfo_t> infos(infoCount);
-                ret = nvmlDeviceGetGraphicsRunningProcesses(handle, &infoCount, infos.data());
+                ret = _nvmlDeviceGetGraphicsRunningProcesses(handle, &infoCount, infos.data());
                 int a = 0;
             }
         }
         {
             unsigned int infoCount = 0;
-            ret = nvmlDeviceGetComputeRunningProcesses(handle, &infoCount, nullptr);
+            ret = _nvmlDeviceGetComputeRunningProcesses(handle, &infoCount, nullptr);
             if (ret == NVML_ERROR_INSUFFICIENT_SIZE || ret == NVML_SUCCESS)
             {
                 vector<nvmlProcessInfo_t> infos(infoCount);
-                ret = nvmlDeviceGetComputeRunningProcesses(handle, &infoCount, infos.data());
+                ret = _nvmlDeviceGetComputeRunningProcesses(handle, &infoCount, infos.data());
                 int a = 0;
             }
         }
 #endif
         nvmlEnableState_t mode;
-        ret = nvmlDeviceGetAccountingMode(handle, &mode);
+        ret = _nvmlDeviceGetAccountingMode(handle, &mode);
         if (mode == NVML_FEATURE_DISABLED)
             continue;
 
         info.processInfos.clear();
         unsigned int pidCount = 0;
-        ret = nvmlDeviceGetAccountingPids(handle, &pidCount, nullptr);
+        ret = _nvmlDeviceGetAccountingPids(handle, &pidCount, nullptr);
         if (pidCount > 0)
         {
             vector<unsigned int> pids(pidCount);
-            ret = nvmlDeviceGetAccountingPids(handle, &pidCount, pids.data());
+            ret = _nvmlDeviceGetAccountingPids(handle, &pidCount, pids.data());
             CHECK_NVML(ret, nvmlDeviceGetAccountingPids);
             for (auto pid : pids)
             {
                 nvmlAccountingStats_t gpuStats;
-                ret = nvmlDeviceGetAccountingStats(handle, pid, &gpuStats);
+                ret = _nvmlDeviceGetAccountingStats(handle, pid, &gpuStats);
                 CHECK_NVML(ret, nvmlDeviceGetAccountingStats);
                 if (gpuStats.isRunning && (gpuStats.gpuUtilization > 0 || gpuStats.memoryUtilization > 0))
                 {
@@ -652,8 +652,11 @@ int main(int argc, char* argv[])
 
     nvmlReturn_t nvRetValue = NVML_ERROR_UNINITIALIZED;
 
+    if (!LoadNVML())
+        return -1;
+
     // Before any of the NVML functions can be used nvmlInit() must be called
-    nvRetValue = nvmlInit();
+    nvRetValue = _nvmlInit_v2();
 
     if (NVML_SUCCESS != nvRetValue)
     {
@@ -676,7 +679,7 @@ int main(int argc, char* argv[])
         }
     }
     // Shutdown NVML
-    nvRetValue = nvmlShutdown();
+    nvRetValue = _nvmlShutdown();
     CHECK_NVML(nvRetValue, nvmlShutdown);
 
     return (NVML_SUCCESS == nvRetValue) ? 0 : -1;
