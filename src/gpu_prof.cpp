@@ -23,7 +23,7 @@
  */
 
 #define _HAS_STD_BYTE 0
-#define GPU_PROF_VERSION "0.6"
+#define GPU_PROF_VERSION "0.7"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -35,6 +35,7 @@
 #include "nvidia_prof.h"
 #include "intel_prof.h"
 #include "amd_prof.h"
+#include "../3rdparty/PDH/CPdh.h"
 
 using namespace std;
 
@@ -44,7 +45,7 @@ using namespace cimg_library;
 bool isCanvasVisible = true;
 
 #define WINDOW_W 640
-#define WINDOW_H 240
+#define WINDOW_H 160
 
 vector<shared_ptr<CImgDisplay>> windows;
 
@@ -62,6 +63,9 @@ enum MetricType
     METRIC_NVLINK_TX,
     METRIC_NVLINK_RX,
 
+    METRIC_CPU_SOL,
+    METRIC_DISK_SOL,
+
     METRIC_COUNT,
 };
 
@@ -78,6 +82,9 @@ char* kMetricNames[] =
     "PCIE RX",
     "NVLK TX",
     "NVLK RX",
+
+    "CPU",
+    "DISCK",
 };
 
 const uint8_t colors[][3] =
@@ -95,6 +102,7 @@ const uint8_t colors[][3] =
     { 10,122,200 },
 };
 
+const size_t COLOR_COUNT = _countof(colors);
 
 #ifdef WIN32
 #include <Windows.h>
@@ -184,6 +192,55 @@ PROCESSENTRY32 getEntryFromPID(DWORD pid)
 
 #endif
 
+struct MetricsInfo
+{
+    static const int HISTORY_COUNT = WINDOW_W / 2;
+    float metrics[METRIC_COUNT][HISTORY_COUNT] = {};
+    float metrics_sum[METRIC_COUNT] = {};
+    float metrics_avg[METRIC_COUNT] = {};
+    void addMetric(MetricType type, float value)
+    {
+        metrics_sum[type] -= metrics[type][0];
+        metrics_sum[type] += value;
+        metrics_avg[type] = metrics_sum[type] / HISTORY_COUNT;
+        for (int i = 0; i < HISTORY_COUNT - 1; i++)
+            metrics[type][i] = metrics[type][i + 1];
+        metrics[type][HISTORY_COUNT - 1] = value;
+    }
+};
+
+struct SystemInfo
+{
+    CPDH pdh;
+
+    MetricsInfo metrics;
+
+    /// Add Counter ///
+    int nIdx_CpuUsage = -1;
+    double dCpu = 0;
+
+    bool setup()
+    {
+        if (pdh.AddCounter(df_PDH_CPUUSAGE_TOTAL, nIdx_CpuUsage) != ERROR_SUCCESS)
+            return false;
+        return true;
+    }
+
+    void update()
+    {
+        if (pdh.CollectQueryData())
+            return;
+        /// Update Counters ///
+        if (!pdh.GetCounterValue(nIdx_CpuUsage, &dCpu)) dCpu = 0;
+#if 0
+        double dMin = 0, dMax = 0, dMean = 0;
+        if (pdh.GetStatistics(&dMin, &dMax, &dMean, nIdx_CpuUsage))
+            wprintf(L" (Min %.1f / Max %.1f / Mean %.1f)", dMin, dMax, dMean);
+#endif
+        metrics.addMetric(METRIC_CPU_SOL, dCpu);
+    }
+};
+
 struct ProcessInfo
 {
     unsigned int pid;
@@ -212,21 +269,10 @@ struct GpuInfo
     
     nvmlEnableState_t bMonitorConnected = NVML_FEATURE_DISABLED;
 
-    static const int HISTORY_COUNT = WINDOW_W / 2;
-    float metrics[METRIC_COUNT][HISTORY_COUNT] = {};
-    float metrics_sum[METRIC_COUNT] = {};
-    float metrics_avg[METRIC_COUNT] = {};
-    void addMetric(MetricType type, float value)
-    {
-        metrics_sum[type] -= metrics[type][0];
-        metrics_sum[type] += value;
-        metrics_avg[type] = metrics_sum[type] / HISTORY_COUNT;
-        for (int i = 0; i < HISTORY_COUNT - 1; i++)
-            metrics[type][i] = metrics[type][i + 1];
-        metrics[type][HISTORY_COUNT - 1] = value;
-    }
+    MetricsInfo metrics;
 };
 
+SystemInfo systemInfo;
 vector<GpuInfo> gpuInfos;
 
 #define CHECK_NVML(nvRetValue, func) \
@@ -258,6 +304,12 @@ uint32_t uiNumGPUs = 0;
 
 int setup()
 {
+    {
+        systemInfo.setup();
+        auto window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, "System", 3);
+        windows.push_back(window);
+    }
+
     char driverVersion[80];
     int cudaVersion = 0;
     char nvmlVersion[80];
@@ -353,6 +405,8 @@ int setup()
 
 int update()
 {
+    systemInfo.update();
+
     nvmlReturn_t nvRetValue = NVML_ERROR_UNINITIALIZED;
 // Iterate through all of the GPUs
     for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
@@ -389,9 +443,9 @@ int update()
         uint64_t ulFrameBufferUsedMBytes = (uint64_t)(ulFrameBufferTotalMBytes - (GPUmemoryInfo.free / 1024L / 1024L));
 
         // calculate the frame buffer memory utilization
-        info.addMetric(METRIC_SM_SOL, nvUtilData.gpu);
-        info.addMetric(METRIC_MEM_SOL, nvUtilData.memory);
-        info.addMetric(METRIC_FB_USAGE, ulFrameBufferUsedMBytes * 100.0f / ulFrameBufferTotalMBytes);
+        info.metrics.addMetric(METRIC_SM_SOL, nvUtilData.gpu);
+        info.metrics.addMetric(METRIC_MEM_SOL, nvUtilData.memory);
+        info.metrics.addMetric(METRIC_FB_USAGE, ulFrameBufferUsedMBytes * 100.0f / ulFrameBufferTotalMBytes);
 
         // Get the video encoder utilization (where supported)
         uint32_t uiVidEncoderUtil = 0u;
@@ -413,8 +467,8 @@ int update()
         }
         else CHECK_NVML(nvRetValue, nvmlDeviceGetEncoderUtilization);
 
-        info.addMetric(METRIC_NVENC_SOL, uiVidEncoderUtil);
-        info.addMetric(METRIC_NVDEC_SOL, uiVidDecoderUtil);
+        info.metrics.addMetric(METRIC_NVENC_SOL, uiVidEncoderUtil);
+        info.metrics.addMetric(METRIC_NVDEC_SOL, uiVidDecoderUtil);
 
         // Clock
         uint32_t clocks[NVML_CLOCK_COUNT];
@@ -474,8 +528,8 @@ int update()
             rxcounter /= 1024L;
             txcounter /= 1024L;
             printf("\t%-5d\t%-5d", txcounter, rxcounter);
-            info.addMetric(METRIC_NVLINK_TX, txcounter);
-            info.addMetric(METRIC_NVLINK_RX, rxcounter);
+            info.metrics.addMetric(METRIC_NVLINK_TX, txcounter);
+            info.metrics.addMetric(METRIC_NVLINK_RX, rxcounter);
         }
     }
 
@@ -561,10 +615,56 @@ int update()
     return NVML_SUCCESS;
 }
 
+int global_mouse_x = -1;
+int global_mouse_y = -1;
+const int kFontHeight = 16;
+
+void drawMetrics(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img, const MetricsInfo& metrics, int beginMetricId, int endMetricId)
+{
+    const int plotType = 1;
+    const int vertexType = 1;
+    const float alpha = 0.5f;
+
+    unsigned int hatch = 0xF0F0F0F0;
+
+    // metrics charts
+    for (int k = beginMetricId; k <= endMetricId; k++)
+    {
+        CImg<float> plot(metrics.metrics[k], MetricsInfo::HISTORY_COUNT, 1);
+        img.draw_graph(plot, colors[k % COLOR_COUNT], alpha, plotType, vertexType, 100, 0);
+    }
+
+    // avg summary
+    for (int k = beginMetricId; k <= endMetricId; k++)
+    {
+        img.draw_text(kFontHeight, kFontHeight * (k - beginMetricId + 1),
+            "avg %s: %.1f%%\n",
+            colors[k % COLOR_COUNT], 0, 1, kFontHeight,
+            kMetricNames[k],
+            metrics.metrics_avg[k]);
+    }
+
+    // point tooltip
+    if (global_mouse_x >= 0 && global_mouse_y >= 0)
+    {
+        auto value_idx = global_mouse_x / 2;
+        for (int k = beginMetricId; k <= endMetricId; k++)
+        {
+            img.draw_text(window->window_width() - 100, kFontHeight * (k - beginMetricId + 1),
+                "%s: %.1f%%\n",
+                colors[k % COLOR_COUNT], 0, 1, kFontHeight,
+                kMetricNames[k],
+                metrics.metrics[k][value_idx]);
+        }
+        img.draw_line(global_mouse_x, 0, global_mouse_x, window->height() - 1, colors[0], 0.5f, hatch = cimg::rol(hatch));
+    }
+}
+
 void draw()
 {
-    int global_mouse_x = -1;
-    int global_mouse_y = -1;
+    global_mouse_x = -1;
+    global_mouse_y = -1;
+
     for (auto& window : windows)
     {
         auto xm = window->mouse_x();
@@ -583,59 +683,34 @@ void draw()
         if (window->is_keyESC()) running = false;
         window->move(x0, y0 + idx * (window->window_height() + 30));
         // Define colors used to plot the profile, and a hatch to draw the vertical line
-        unsigned int hatch = 0xF0F0F0F0;
-        const auto& info = gpuInfos[idx];
 
-        int plotType = 1;
-        int vertexType = 1;
-        float alpha = 0.5f;
         // Create and display the image of the intensity profile
         CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
         img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
 
-        // metrics charts
-        for (int k = METRIC_SM_SOL; k <= METRIC_NVDEC_SOL; k++)
+        if (idx == 0)
         {
-            CImg<float> plot(info.metrics[k], GpuInfo::HISTORY_COUNT, 1);
-            img.draw_graph(plot, colors[k], alpha, plotType, vertexType, 100, 0);
+            drawMetrics(window, img, systemInfo.metrics, METRIC_CPU_SOL, METRIC_CPU_SOL);
         }
-
-        // avg summary
-        const int kFontHeight = 16;
-        for (int k = METRIC_SM_SOL; k <= METRIC_NVDEC_SOL; k++)
+        else
         {
-            img.draw_text(kFontHeight, kFontHeight * (k + 1),
-                "avg %s: %.1f%%\n",
-                colors[k], 0, 1, kFontHeight,
-                kMetricNames[k],
-                info.metrics_avg[k]);
-        }
+            int gpuIdx = idx - 1;
+            const auto& info = gpuInfos[idx - 1];
 
-        // point tooltip
-        if (global_mouse_x >= 0 && global_mouse_y >= 0)
-        {
-            auto value_idx = global_mouse_x / 2;
-            for (int k = METRIC_SM_SOL; k <= METRIC_NVDEC_SOL; k++)
+            drawMetrics(window, img, info.metrics, METRIC_SM_SOL, METRIC_NVDEC_SOL);
+
+            // per process info
+            int k = 0;
+            for (const auto& p : info.processInfos)
             {
-                img.draw_text(window->window_width() - 100, kFontHeight * (k + 1),
-                    "%s: %.1f%%\n",
-                    colors[k], 0, 1, kFontHeight,
-                    kMetricNames[k],
-                    info.metrics[k][value_idx]);
+                img.draw_text(140, kFontHeight * (k + 1),
+                    "%s (%d): %d%% | %d%% \n",
+                    colors[9], 0, 1, kFontHeight,
+                    p.exeName.c_str(), p.pid, p.gpuStats.gpuUtilization, p.gpuStats.memoryUtilization);
+                k++;
             }
-            img.draw_line(global_mouse_x, 0, global_mouse_x, window->height() - 1, colors[0], 0.5f, hatch = cimg::rol(hatch));
         }
 
-        // per process info
-        int k = 0;
-        for (const auto& p : info.processInfos)
-        {
-            img.draw_text(140, kFontHeight * (k + 1),
-                "%s (%d): %d%% | %d%% \n",
-                colors[9], 0, 1, kFontHeight,
-                p.exeName.c_str(), p.pid, p.gpuStats.gpuUtilization, p.gpuStats.memoryUtilization);
-            k++;
-        }
         img.display(*window);
         idx++;
     }

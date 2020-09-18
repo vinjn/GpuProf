@@ -51,6 +51,9 @@
     <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\source\metrics_discovery_helper_dx11.h">
       <Filter>MetricsDiscoveryHelper\helper</Filter>
     </ClInclude>
+    <ClInclude Include="..\3rdparty\PDH\CPdh.h">
+      <Filter>PDH</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpu_prof.cpp" />
@@ -84,6 +87,9 @@
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\values.cpp">
       <Filter>MetricsDiscoveryHelper\helper</Filter>
     </ClCompile>
+    <ClCompile Include="..\3rdparty\PDH\CPdh.cpp">
+      <Filter>PDH</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MetricsDiscoveryHelper">
@@ -94,6 +100,9 @@
     </Filter>
     <Filter Include="MetricsDiscoveryHelper\helper">
       <UniqueIdentifier>{aca71ae1-3328-42f6-9b5f-b6247c40c425}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PDH">
+      <UniqueIdentifier>{addeb0b3-78d3-4189-9a27-5ea9452a20ae}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
