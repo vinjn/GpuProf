@@ -88,7 +88,7 @@
 // PDH Browse Counters Define
 //
 //  PDH 쿼리문을 알아내기 위해 해당 소스 혹은 `성능 모니터` 이용
-// https://docs.microsoft.com/ko-kr/windows/desktop/PerfCtrs/browsing-performance-counters
+// https://docs.microsoft.com/en-us/windows/win32/perfctrs/browsing-performance-counters
 **********************************************************************************************/
 /// CPU ///
 // * CPU 사용량은 OS에 따라 정상적으로 얻어지지 않는 경우도 있음 : 직접 사용시간을 구해서 사용하도록 함
@@ -99,6 +99,10 @@
 #define df_PDH_CPUUSAGE_3 "\\Processor(3)\\% Processor Time"
 //#define df_PDH_CPUUSAGE_USER "\\Process(NAME)\\% User Time"			// 프로세스 CPU 유저 사용률(%)
 //#define df_PDH_CPUUSAGE_USER "\\Process(NAME)\\% Processor Time"		// 프로세스 CPU 전체 사용률(%)
+
+#define df_PDH_DISK_READ_TOTAL "\\PhysicalDisk(_Total)\\% Disk Read Time"
+#define df_PDH_DISK_WRITE_TOTAL "\\PhysicalDisk(_Total)\\% Disk Write Time"
+
 /// MEMORY ///
 #define df_PDH_MEMINUSE_BYTES "\\Memory\\Committed Bytes" // 미리 할당된 메모리(Bytes)
 #define df_PDH_MEMAVAIL_BYTES "\\Memory\\Available Bytes" // 사용가능 메모리(Bytes)

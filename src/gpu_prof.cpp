@@ -64,7 +64,8 @@ enum MetricType
     METRIC_NVLINK_RX,
 
     METRIC_CPU_SOL,
-    METRIC_DISK_SOL,
+    METRIC_DISK_READ_SOL,
+    METRIC_DISK_WRITE_SOL,
 
     METRIC_COUNT,
 };
@@ -84,7 +85,8 @@ char* kMetricNames[] =
     "NVLK RX",
 
     "CPU",
-    "DISCK",
+    "DISK R",
+    "DISK W",
 };
 
 const uint8_t colors[][3] =
@@ -217,12 +219,18 @@ struct SystemInfo
 
     /// Add Counter ///
     int nIdx_CpuUsage = -1;
+    int nIdx_DiskRead = -1;
+    int nIdx_DiskWrite = -1;
     double dCpu = 0;
+    double diskRead = 0;
+    double diskWrite = 0;
 
     bool setup()
     {
-        if (pdh.AddCounter(df_PDH_CPUUSAGE_TOTAL, nIdx_CpuUsage) != ERROR_SUCCESS)
-            return false;
+        pdh.AddCounter(df_PDH_CPUUSAGE_TOTAL, nIdx_CpuUsage);
+        pdh.AddCounter(df_PDH_DISK_READ_TOTAL, nIdx_DiskRead);
+        pdh.AddCounter(df_PDH_DISK_WRITE_TOTAL, nIdx_DiskWrite);
+
         return true;
     }
 
@@ -232,12 +240,16 @@ struct SystemInfo
             return;
         /// Update Counters ///
         if (!pdh.GetCounterValue(nIdx_CpuUsage, &dCpu)) dCpu = 0;
+        if (!pdh.GetCounterValue(nIdx_DiskRead, &diskRead)) diskRead = 0;
+        if (!pdh.GetCounterValue(nIdx_DiskWrite, &diskWrite)) diskWrite = 0;
 #if 0
         double dMin = 0, dMax = 0, dMean = 0;
         if (pdh.GetStatistics(&dMin, &dMax, &dMean, nIdx_CpuUsage))
             wprintf(L" (Min %.1f / Max %.1f / Mean %.1f)", dMin, dMax, dMean);
 #endif
         metrics.addMetric(METRIC_CPU_SOL, dCpu);
+        metrics.addMetric(METRIC_DISK_READ_SOL, diskRead);
+        metrics.addMetric(METRIC_DISK_WRITE_SOL, diskWrite);
     }
 };
 
@@ -690,7 +702,7 @@ void draw()
 
         if (idx == 0)
         {
-            drawMetrics(window, img, systemInfo.metrics, METRIC_CPU_SOL, METRIC_CPU_SOL);
+            drawMetrics(window, img, systemInfo.metrics, METRIC_CPU_SOL, METRIC_DISK_WRITE_SOL);
         }
         else
         {
@@ -752,6 +764,8 @@ int main(int argc, char* argv[])
         {
             draw();
         }
+
+        ::Sleep(100);
     }
     // Shutdown NVML
     nvRetValue = _nvmlShutdown();
