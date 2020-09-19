@@ -64,6 +64,7 @@ enum MetricType
     METRIC_NVLINK_RX,
 
     METRIC_CPU_SOL,
+    METRIC_SYS_MEM_SOL,
     METRIC_DISK_READ_SOL,
     METRIC_DISK_WRITE_SOL,
 
@@ -85,6 +86,7 @@ char* kMetricNames[] =
     "NVLK RX",
 
     "CPU",
+    "MEM",
     "DISK R",
     "DISK W",
 };
@@ -220,17 +222,22 @@ struct SystemInfo
 
     MetricsInfo metrics;
 
+    // TODO: refactor
+
     /// Add Counter ///
     int nIdx_CpuUsage = -1;
+    int nIdx_MemUsage = -1;
     int nIdx_DiskRead = -1;
     int nIdx_DiskWrite = -1;
     double dCpu = 0;
+    double dMem = 0;
     double diskRead = 0;
     double diskWrite = 0;
 
     bool setup()
     {
         pdh.AddCounter(df_PDH_CPUUSAGE_TOTAL, nIdx_CpuUsage);
+        pdh.AddCounter(df_PDH_MEMINUSE_PERCENT, nIdx_MemUsage);
         pdh.AddCounter(df_PDH_DISK_READ_TOTAL, nIdx_DiskRead);
         pdh.AddCounter(df_PDH_DISK_WRITE_TOTAL, nIdx_DiskWrite);
 
@@ -243,6 +250,7 @@ struct SystemInfo
             return;
         /// Update Counters ///
         if (!pdh.GetCounterValue(nIdx_CpuUsage, &dCpu)) dCpu = 0;
+        if (!pdh.GetCounterValue(nIdx_MemUsage, &dMem)) dMem = 0;
         if (!pdh.GetCounterValue(nIdx_DiskRead, &diskRead)) diskRead = 0;
         if (!pdh.GetCounterValue(nIdx_DiskWrite, &diskWrite)) diskWrite = 0;
 #if 0
@@ -251,6 +259,7 @@ struct SystemInfo
             wprintf(L" (Min %.1f / Max %.1f / Mean %.1f)", dMin, dMax, dMean);
 #endif
         metrics.addMetric(METRIC_CPU_SOL, dCpu);
+        metrics.addMetric(METRIC_SYS_MEM_SOL, dMem);
         metrics.addMetric(METRIC_DISK_READ_SOL, diskRead);
         metrics.addMetric(METRIC_DISK_WRITE_SOL, diskWrite);
     }
@@ -656,7 +665,7 @@ void drawMetrics(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img, const
     for (int k = beginMetricId; k <= endMetricId; k++)
     {
         img.draw_text(kFontHeight, kFontHeight * (k - beginMetricId + 1),
-            "avg %s: %.1f%%\n",
+            "%s: %.1f%%\n",
             colors[k % COLOR_COUNT], 0, 1, kFontHeight,
             kMetricNames[k],
             metrics.metrics_avg[k]);
@@ -669,7 +678,7 @@ void drawMetrics(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img, const
         for (int k = beginMetricId; k <= endMetricId; k++)
         {
             img.draw_text(window->window_width() - 100, kFontHeight * (k - beginMetricId + 1),
-                "%s: %.1f%%\n",
+                "|%s: %.1f%%\n",
                 colors[k % COLOR_COUNT], 0, 1, kFontHeight,
                 kMetricNames[k],
                 metrics.metrics[k][value_idx]);
