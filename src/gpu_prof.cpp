@@ -196,6 +196,7 @@ PROCESSENTRY32 getEntryFromPID(DWORD pid)
 
 struct MetricsInfo
 {
+    static int valid_element_count;
     static const int HISTORY_COUNT = WINDOW_W / 2;
     float metrics[METRIC_COUNT][HISTORY_COUNT] = {};
     float metrics_sum[METRIC_COUNT] = {};
@@ -204,12 +205,14 @@ struct MetricsInfo
     {
         metrics_sum[type] -= metrics[type][0];
         metrics_sum[type] += value;
-        metrics_avg[type] = metrics_sum[type] / HISTORY_COUNT;
+        metrics_avg[type] = metrics_sum[type] / valid_element_count;
         for (int i = 0; i < HISTORY_COUNT - 1; i++)
             metrics[type][i] = metrics[type][i + 1];
         metrics[type][HISTORY_COUNT - 1] = value;
     }
 };
+
+int MetricsInfo::valid_element_count = 0;
 
 struct SystemInfo
 {
@@ -418,6 +421,9 @@ int setup()
 int update()
 {
     systemInfo.update();
+
+    if (MetricsInfo::valid_element_count < MetricsInfo::HISTORY_COUNT)
+        MetricsInfo::valid_element_count++;
 
     nvmlReturn_t nvRetValue = NVML_ERROR_UNINITIALIZED;
 // Iterate through all of the GPUs
