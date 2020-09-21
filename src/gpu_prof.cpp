@@ -658,7 +658,7 @@ void drawMetrics(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img, const
     for (int k = beginMetricId; k <= endMetricId; k++)
     {
         CImg<float> plot(metrics.metrics[k], MetricsInfo::HISTORY_COUNT, 1);
-        img.draw_graph(plot, colors[k % COLOR_COUNT], alpha, plotType, vertexType, 100, 0);
+        img.draw_graph(plot, colors[k % COLOR_COUNT], alpha, plotType, vertexType, 102, 0);
     }
 
     // avg summary
