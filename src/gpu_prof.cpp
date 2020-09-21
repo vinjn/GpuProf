@@ -708,7 +708,7 @@ void draw()
     for (auto& window : windows)
     {
         if (window->is_keyESC()) running = false;
-        window->move(x0, y0 + idx * (window->window_height() + 30));
+        window->move(x0, y0 + idx * (window->window_height() + 31));
         // Define colors used to plot the profile, and a hatch to draw the vertical line
 
         // Create and display the image of the intensity profile
