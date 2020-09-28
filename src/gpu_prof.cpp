@@ -35,6 +35,7 @@
 #include "nvidia_prof.h"
 #include "intel_prof.h"
 #include "amd_prof.h"
+#include "screen_shot.h"
 #include "../3rdparty/PDH/CPdh.h"
 
 using namespace std;
@@ -749,6 +750,8 @@ int main(int argc, char* argv[])
 #if 0
     intel_prof_main(0, NULL);
 #endif
+
+    //gdiscreen();
 
     printf("GpuProf %s from vinjn.com\n", GPU_PROF_VERSION);
 

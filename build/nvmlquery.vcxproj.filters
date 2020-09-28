@@ -54,6 +54,7 @@
     <ClInclude Include="..\3rdparty\PDH\CPdh.h">
       <Filter>PDH</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\screen_shot.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpu_prof.cpp" />
@@ -90,6 +91,7 @@
     <ClCompile Include="..\3rdparty\PDH\CPdh.cpp">
       <Filter>PDH</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\screen_shot.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MetricsDiscoveryHelper">
