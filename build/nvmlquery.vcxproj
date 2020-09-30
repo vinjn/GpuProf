@@ -21,14 +21,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -103,7 +103,21 @@
     <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\source\metrics_discovery_helper.h" />
     <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\source\metrics_discovery_helper_dx11.h" />
     <ClInclude Include="..\3rdparty\PDH\CPdh.h" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\Debug.hpp" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_D3D9.h" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_Dwm_Core.h" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_DXGI.h" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_DxgKrnl.h" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_EventMetadata.h" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_Win32k.h" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\NT_Process.h" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\MixedRealityTraceConsumer.hpp" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\PresentMonTraceConsumer.hpp" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\TraceConsumer.hpp" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\TraceSession.hpp" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentMon\PresentMon.hpp" />
     <ClInclude Include="..\src\amd_prof.h" />
+    <ClInclude Include="..\src\etw_prof.h" />
     <ClInclude Include="..\src\intel_prof.h" />
     <ClInclude Include="..\src\nvidia_prof.h" />
     <ClInclude Include="..\src\screen_shot.h" />
@@ -120,7 +134,37 @@
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\report_memory.cpp" />
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\values.cpp" />
     <ClCompile Include="..\3rdparty\PDH\CPdh.cpp" />
+    <ClCompile Include="..\3rdparty\PresentMon\PresentData\Debug.cpp" />
+    <ClCompile Include="..\3rdparty\PresentMon\PresentData\MixedRealityTraceConsumer.cpp" />
+    <ClCompile Include="..\3rdparty\PresentMon\PresentData\PresentMonTraceConsumer.cpp" />
+    <ClCompile Include="..\3rdparty\PresentMon\PresentData\TraceConsumer.cpp" />
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\CommandLine.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\Console.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\ConsumerThread.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\MainThread.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\Privilege.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\TraceSession.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\etw_prof.cpp" />
     <ClCompile Include="..\src\gpu_prof.cpp" />
+    <ClCompile Include="..\src\nvidia_prof.cpp" />
     <ClCompile Include="..\src\screen_shot.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

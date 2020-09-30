@@ -55,6 +55,46 @@
       <Filter>PDH</Filter>
     </ClInclude>
     <ClInclude Include="..\src\screen_shot.h" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\Debug.hpp">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\MixedRealityTraceConsumer.hpp">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\PresentMonTraceConsumer.hpp">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\TraceConsumer.hpp">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\TraceSession.hpp">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_D3D9.h">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_Dwm_Core.h">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_DXGI.h">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_DxgKrnl.h">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_EventMetadata.h">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_Win32k.h">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\NT_Process.h">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\etw_prof.h" />
+    <ClInclude Include="..\3rdparty\PresentMon\PresentMon\PresentMon.hpp">
+      <Filter>PresentMon</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\gpu_prof.cpp" />
@@ -92,6 +132,38 @@
       <Filter>PDH</Filter>
     </ClCompile>
     <ClCompile Include="..\src\screen_shot.cpp" />
+    <ClCompile Include="..\3rdparty\PresentMon\PresentData\Debug.cpp">
+      <Filter>PresentMon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentData\MixedRealityTraceConsumer.cpp">
+      <Filter>PresentMon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentData\PresentMonTraceConsumer.cpp">
+      <Filter>PresentMon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentData\TraceConsumer.cpp">
+      <Filter>PresentMon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\etw_prof.cpp" />
+    <ClCompile Include="..\src\nvidia_prof.cpp" />
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\Privilege.cpp">
+      <Filter>PresentMon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\CommandLine.cpp">
+      <Filter>PresentMon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\Console.cpp">
+      <Filter>PresentMon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\MainThread.cpp">
+      <Filter>PresentMon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\TraceSession.cpp">
+      <Filter>PresentMon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\ConsumerThread.cpp">
+      <Filter>PresentMon</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MetricsDiscoveryHelper">
@@ -105,6 +177,9 @@
     </Filter>
     <Filter Include="PDH">
       <UniqueIdentifier>{addeb0b3-78d3-4189-9a27-5ea9452a20ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PresentMon">
+      <UniqueIdentifier>{36b6e93a-61c6-413d-973f-aabc0b2636d2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

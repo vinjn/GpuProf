@@ -2,6 +2,7 @@
  * MIT License
  *
  * Copyright (c) 2016 Jeremy Main (jmain.jp@gmail.com)
+ * Copyright (c) 2019-2020 Vinjn Zhang (vinjn@qq.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +24,7 @@
  */
 
 #define _HAS_STD_BYTE 0
-#define GPU_PROF_VERSION "0.7"
+#define GPU_PROF_VERSION "0.8"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -37,6 +38,7 @@
 #include "amd_prof.h"
 #include "screen_shot.h"
 #include "../3rdparty/PDH/CPdh.h"
+#include "../3rdparty/PresentMon/PresentData/PresentMonTraceConsumer.hpp"
 
 using namespace std;
 
