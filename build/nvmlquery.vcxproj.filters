@@ -158,10 +158,10 @@
     <ClCompile Include="..\3rdparty\PresentMon\PresentMon\MainThread.cpp">
       <Filter>PresentMon</Filter>
     </ClCompile>
-    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\TraceSession.cpp">
+    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\ConsumerThread.cpp">
       <Filter>PresentMon</Filter>
     </ClCompile>
-    <ClCompile Include="..\3rdparty\PresentMon\PresentMon\ConsumerThread.cpp">
+    <ClCompile Include="..\3rdparty\PresentMon\PresentData\TraceSession.cpp">
       <Filter>PresentMon</Filter>
     </ClCompile>
   </ItemGroup>

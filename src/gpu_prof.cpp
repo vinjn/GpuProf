@@ -37,8 +37,8 @@
 #include "intel_prof.h"
 #include "amd_prof.h"
 #include "screen_shot.h"
+#include "etw_prof.h"
 #include "../3rdparty/PDH/CPdh.h"
-#include "../3rdparty/PresentMon/PresentData/PresentMonTraceConsumer.hpp"
 
 using namespace std;
 
@@ -293,7 +293,7 @@ struct GpuInfo
     bool bGPUUtilSupported = true;
     bool bEncoderUtilSupported = true;
     bool bDecoderUtilSupported = true;
-    
+
     nvmlEnableState_t bMonitorConnected = NVML_FEATURE_DISABLED;
 
     MetricsInfo metrics;
@@ -337,13 +337,16 @@ int setup()
         windows.push_back(window);
     }
 
+    // Start the ETW trace session (including consumer and output threads).
+    etw_setup();
+
     char driverVersion[80];
     int cudaVersion = 0;
     char nvmlVersion[80];
     auto nvRetValue = _nvmlSystemGetDriverVersion(driverVersion, 80);
     nvRetValue = _nvmlSystemGetCudaDriverVersion(&cudaVersion);
     nvRetValue = _nvmlSystemGetNVMLVersion(nvmlVersion, 80);
-    printf("Driver: %s     CUDA: %d.%d      NVML: %s\n", 
+    printf("Driver: %s     CUDA: %d.%d      NVML: %s\n",
         driverVersion,
         NVML_CUDA_DRIVER_VERSION_MAJOR(cudaVersion), NVML_CUDA_DRIVER_VERSION_MINOR(cudaVersion),
         nvmlVersion);
@@ -438,7 +441,7 @@ int update()
         MetricsInfo::valid_element_count++;
 
     nvmlReturn_t nvRetValue = NVML_ERROR_UNINITIALIZED;
-// Iterate through all of the GPUs
+    // Iterate through all of the GPUs
     for (uint32_t iDevIDX = 0; iDevIDX < uiNumGPUs; iDevIDX++)
     {
         auto& info = gpuInfos[iDevIDX];
@@ -753,6 +756,8 @@ int main(int argc, char* argv[])
     intel_prof_main(0, NULL);
 #endif
 
+    //ElevatePrivilege(argc, argv);
+
     //gdiscreen();
 
     printf("GpuProf %s from vinjn.com\n", GPU_PROF_VERSION);
@@ -790,6 +795,8 @@ int main(int argc, char* argv[])
     // Shutdown NVML
     nvRetValue = _nvmlShutdown();
     CHECK_NVML(nvRetValue, nvmlShutdown);
+
+    etw_quit();
 
     return (NVML_SUCCESS == nvRetValue) ? 0 : -1;
 }
