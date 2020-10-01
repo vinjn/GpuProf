@@ -87,10 +87,10 @@ bool etw_setup()
 
     if (status == ERROR_ALREADY_EXISTS) {
         if (true /*args.mStopExistingSession*/) {
-            fprintf(stderr,
-                "warning: a trace session named \"%s\" is already running and it will be stopped.\n"
-                "         Use -session_name with a different name to start a new session.\n",
-                mSessionName);
+            //fprintf(stderr,
+            //    "warning: a trace session named \"%s\" is already running and it will be stopped.\n"
+            //    "         Use -session_name with a different name to start a new session.\n",
+            //    mSessionName);
         }
         else {
             fprintf(stderr,
