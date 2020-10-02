@@ -1,5 +1,14 @@
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#include <windows.h>
+#include <evntcons.h> // must include after windows.h
+#include <unordered_map>
+
 #include "etw_prof.h"
 #include "../3rdparty/PresentMon/PresentData/TraceSession.hpp"
+#include "../3rdparty/PresentMon/PresentData/PresentMonTraceConsumer.hpp"
+#include "../3rdparty/PresentMon/PresentData/MixedRealityTraceConsumer.hpp"
+#include <Shlwapi.h>
 
 #pragma comment(lib, "Tdh")
 #include <VersionHelpers.h>
@@ -34,7 +43,12 @@ namespace {
 }
 
 
-static void Consume(TRACEHANDLE traceHandle)
+struct LateStageReprojectionData
+{
+
+};
+
+void Consume(TRACEHANDLE traceHandle)
 {
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
 
@@ -147,8 +161,6 @@ void etw_quit()
     gPMConsumer = nullptr;
 }
 
-#if 0
-
 void CheckLostReports(ULONG* eventsLost, ULONG* buffersLost)
 {
     auto status = gSession.CheckLostReports(eventsLost, buffersLost);
@@ -157,10 +169,12 @@ void CheckLostReports(ULONG* eventsLost, ULONG* buffersLost)
 
 void DequeueAnalyzedInfo(
     std::vector<ProcessEvent>* processEvents,
-    std::vector<std::shared_ptr<PresentEvent>>* presentEvents)
+    std::vector<std::shared_ptr<PresentEvent>>* presentEvents,
+    std::vector<std::shared_ptr<LateStageReprojectionEvent>>* lsrEvents)
 {
     gPMConsumer->DequeueProcessEvents(*processEvents);
     gPMConsumer->DequeuePresentEvents(*presentEvents);
+    (lsrEvents);
 }
 
 double QpcDeltaToSeconds(uint64_t qpcDelta)
@@ -178,23 +192,9 @@ double QpcToSeconds(uint64_t qpc)
     return QpcDeltaToSeconds(qpc - gSession.mStartQpc.QuadPart);
 }
 
-
-
 void SetOutputRecordingState(bool record)
 {
-    auto const& args = GetCommandLineArgs();
-
     if (gIsRecording == record) {
-        return;
-    }
-
-    // When capturing from an ETL file, just use the current recording state.
-    // It's not clear how best to map realtime to ETL QPC time, and there
-    // aren't any realtime cues in this case.
-    if (args.mEtlFileName != nullptr) {
-        EnterCriticalSection(&gRecordingToggleCS);
-        gIsRecording = record;
-        LeaveCriticalSection(&gRecordingToggleCS);
         return;
     }
 
@@ -207,7 +207,7 @@ void SetOutputRecordingState(bool record)
     LeaveCriticalSection(&gRecordingToggleCS);
 }
 
-static bool CopyRecordingToggleHistory(std::vector<uint64_t>* recordingToggleHistory)
+bool CopyRecordingToggleHistory(std::vector<uint64_t>* recordingToggleHistory)
 {
     EnterCriticalSection(&gRecordingToggleCS);
     recordingToggleHistory->assign(gRecordingToggleHistory.begin(), gRecordingToggleHistory.end());
@@ -219,7 +219,7 @@ static bool CopyRecordingToggleHistory(std::vector<uint64_t>* recordingToggleHis
 }
 
 // Remove recording toggle events that we've processed.
-static void UpdateRecordingToggles(size_t nextIndex)
+void UpdateRecordingToggles(size_t nextIndex)
 {
     if (nextIndex > 0) {
         EnterCriticalSection(&gRecordingToggleCS);
@@ -227,6 +227,21 @@ static void UpdateRecordingToggles(size_t nextIndex)
         LeaveCriticalSection(&gRecordingToggleCS);
     }
 }
+
+struct SwapChainData {
+    enum { PRESENT_HISTORY_MAX_COUNT = 120 };
+    std::shared_ptr<PresentEvent> mPresentHistory[PRESENT_HISTORY_MAX_COUNT];
+    uint32_t mPresentHistoryCount;
+    uint32_t mNextPresentIndex;
+    uint32_t mLastDisplayedPresentIndex;
+};
+
+struct ProcessInfo {
+    std::string mModuleName;
+    std::unordered_map<uint64_t, SwapChainData> mSwapChain;
+    HANDLE mHandle;
+    bool mTargetProcess;
+};
 
 // Processes are handled differently when running in realtime collection vs.
 // ETL collection.  When reading an ETL, we receive NT_PROCESS events whenever
@@ -237,13 +252,13 @@ static void UpdateRecordingToggles(size_t nextIndex)
 // obtain a handle to the process, and periodically check it to see if it has
 // exited.
 
-static std::unordered_map<uint32_t, ProcessInfo> gProcesses;
-static uint32_t gTargetProcessCount = 0;
+std::unordered_map<uint32_t, ProcessInfo> gProcesses;
+uint32_t gTargetProcessCount = 0;
 
-static bool IsTargetProcess(uint32_t processId, std::string const& processName)
+bool IsTargetProcess(uint32_t processId, std::string const& processName)
 {
-    auto const& args = GetCommandLineArgs();
-
+    return true;
+#if 0
     // -exclude
     for (auto excludeProcessName : args.mExcludeProcessNames) {
         if (_stricmp(excludeProcessName, processName.c_str()) == 0) {
@@ -256,29 +271,16 @@ static bool IsTargetProcess(uint32_t processId, std::string const& processName)
         return true;
     }
 
-    // -process_id
-    if (args.mTargetPid != 0 && args.mTargetPid == processId) {
-        return true;
-    }
-
-    // -process_name
-    for (auto targetProcessName : args.mTargetProcessNames) {
-        if (_stricmp(targetProcessName, processName.c_str()) == 0) {
-            return true;
-        }
-    }
-
     return false;
+#endif
 }
 
-static void InitProcessInfo(ProcessInfo* processInfo, uint32_t processId, HANDLE handle, std::string const& processName)
+void InitProcessInfo(ProcessInfo* processInfo, uint32_t processId, HANDLE handle, std::string const& processName)
 {
     auto target = IsTargetProcess(processId, processName);
 
     processInfo->mHandle = handle;
     processInfo->mModuleName = processName;
-    processInfo->mOutputCsv.mFile = nullptr;
-    processInfo->mOutputCsv.mWmrFile = nullptr;
     processInfo->mTargetProcess = target;
 
     if (target) {
@@ -286,7 +288,7 @@ static void InitProcessInfo(ProcessInfo* processInfo, uint32_t processId, HANDLE
     }
 }
 
-static ProcessInfo* GetProcessInfo(uint32_t processId)
+ProcessInfo* GetProcessInfo(uint32_t processId)
 {
     auto result = gProcesses.emplace(processId, ProcessInfo());
     auto processInfo = &result.first->second;
@@ -296,10 +298,9 @@ static ProcessInfo* GetProcessInfo(uint32_t processId)
         // In ETL capture, we should have gotten an NTProcessEvent for this
         // process updated via UpdateNTProcesses(), so this path should only
         // happen in realtime capture.
-        auto const& args = GetCommandLineArgs();
         HANDLE handle = NULL;
         char const* processName = "<error>";
-        if (args.mEtlFileName == nullptr) {
+        {
             char path[MAX_PATH];
             DWORD numChars = sizeof(path);
             handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
@@ -320,7 +321,7 @@ static ProcessInfo* GetProcessInfo(uint32_t processId)
 // We assume that the process terminated now, which is wrong but conservative
 // and functionally ok because no other process should start with the same PID
 // as long as we're still holding a handle to it.
-static void CheckForTerminatedRealtimeProcesses(std::vector<std::pair<uint32_t, uint64_t>>* terminatedProcesses)
+void CheckForTerminatedRealtimeProcesses(std::vector<std::pair<uint32_t, uint64_t>>* terminatedProcesses)
 {
     for (auto& pair : gProcesses) {
         auto processId = pair.first;
@@ -337,31 +338,17 @@ static void CheckForTerminatedRealtimeProcesses(std::vector<std::pair<uint32_t, 
     }
 }
 
-static void HandleTerminatedProcess(uint32_t processId)
+void HandleTerminatedProcess(uint32_t processId)
 {
-    auto const& args = GetCommandLineArgs();
-
     auto iter = gProcesses.find(processId);
     if (iter == gProcesses.end()) {
         return; // shouldn't happen.
     }
 
-    auto processInfo = &iter->second;
-    if (processInfo->mTargetProcess) {
-        // Close this process' CSV.
-        CloseOutputCsv(processInfo);
-
-        // Quit if this is the last process tracked for -terminate_on_proc_exit.
-        gTargetProcessCount -= 1;
-        if (args.mTerminateOnProcExit && gTargetProcessCount == 0) {
-            ExitMainThread();
-        }
-    }
-
     gProcesses.erase(iter);
 }
 
-static void UpdateProcesses(std::vector<ProcessEvent> const& processEvents, std::vector<std::pair<uint32_t, uint64_t>>* terminatedProcesses)
+void UpdateProcesses(std::vector<ProcessEvent> const& processEvents, std::vector<std::pair<uint32_t, uint64_t>>* terminatedProcesses)
 {
     for (auto const& processEvent : processEvents) {
         if (processEvent.IsStartEvent) {
@@ -382,7 +369,7 @@ static void UpdateProcesses(std::vector<ProcessEvent> const& processEvents, std:
     }
 }
 
-static void AddPresents(std::vector<std::shared_ptr<PresentEvent>> const& presentEvents, size_t* presentEventIndex,
+void AddPresents(std::vector<std::shared_ptr<PresentEvent>> const& presentEvents, size_t* presentEventIndex,
     bool recording, bool checkStopQpc, uint64_t stopQpc, bool* hitStopQpc)
 {
     auto i = *presentEventIndex;
@@ -411,7 +398,7 @@ static void AddPresents(std::vector<std::shared_ptr<PresentEvent>> const& presen
 
         // Output CSV row if recording (need to do this before updating chain).
         if (recording) {
-            UpdateCsv(processInfo, *chain, *presentEvent);
+            //UpdateCsv(processInfo, *chain, *presentEvent);
         }
 
         // Add the present to the swapchain history.
@@ -433,53 +420,15 @@ static void AddPresents(std::vector<std::shared_ptr<PresentEvent>> const& presen
     *presentEventIndex = i;
 }
 
-static void AddPresents(LateStageReprojectionData* lsrData,
-    std::vector<std::shared_ptr<LateStageReprojectionEvent>> const& presentEvents, size_t* presentEventIndex,
-    bool recording, bool checkStopQpc, uint64_t stopQpc, bool* hitStopQpc)
-{
-    auto const& args = GetCommandLineArgs();
-
-    auto i = *presentEventIndex;
-    for (auto n = presentEvents.size(); i < n; ++i) {
-        auto presentEvent = presentEvents[i];
-
-        // Stop processing events if we hit the next stop time.
-        if (checkStopQpc && presentEvent->QpcTime >= stopQpc) {
-            *hitStopQpc = true;
-            break;
-        }
-
-        const uint32_t appProcessId = presentEvent->GetAppProcessId();
-        auto processInfo = GetProcessInfo(appProcessId);
-        if (!processInfo->mTargetProcess) {
-            continue;
-        }
-
-        if ((args.mVerbosity > Verbosity::Simple) && (appProcessId == 0)) {
-            continue; // Incomplete event data
-        }
-
-        lsrData->AddLateStageReprojection(*presentEvent);
-
-        if (recording) {
-            UpdateLsrCsv(*lsrData, processInfo, *presentEvent);
-        }
-
-        lsrData->UpdateLateStageReprojectionInfo();
-    }
-
-    *presentEventIndex = i;
-}
-
 // Limit the present history stored in SwapChainData to 2 seconds.
-static void PruneHistory(
+void PruneHistory(
     std::vector<ProcessEvent> const& processEvents,
     std::vector<std::shared_ptr<PresentEvent>> const& presentEvents,
     std::vector<std::shared_ptr<LateStageReprojectionEvent>> const& lsrEvents)
 {
     assert(processEvents.size() + presentEvents.size() + lsrEvents.size() > 0);
 
-    auto latestQpc = max(max(
+    auto latestQpc = std::max<uint64_t>(std::max<uint64_t>(
         processEvents.empty() ? 0ull : processEvents.back().QpcTime,
         presentEvents.empty() ? 0ull : presentEvents.back()->QpcTime),
         lsrEvents.empty() ? 0ull : lsrEvents.back()->QpcTime);
@@ -508,7 +457,7 @@ static void PruneHistory(
     }
 }
 
-static void ProcessEvents(
+void ProcessEvents(
     LateStageReprojectionData* lsrData,
     std::vector<ProcessEvent>* processEvents,
     std::vector<std::shared_ptr<PresentEvent>>* presentEvents,
@@ -516,8 +465,6 @@ static void ProcessEvents(
     std::vector<uint64_t>* recordingToggleHistory,
     std::vector<std::pair<uint32_t, uint64_t>>* terminatedProcesses)
 {
-    auto const& args = GetCommandLineArgs();
-
     // Copy any analyzed information from ConsumerThread and early-out if there
     // isn't any.
     DequeueAnalyzedInfo(processEvents, presentEvents, lsrEvents);
@@ -567,7 +514,6 @@ static void ProcessEvents(
 
             auto hitTerminatedProcess = false;
             AddPresents(*presentEvents, &presentEventIndex, recording, true, terminatedProcessQpc, &hitTerminatedProcess);
-            AddPresents(lsrData, *lsrEvents, &lsrEventIndex, recording, true, terminatedProcessQpc, &hitTerminatedProcess);
             if (!hitTerminatedProcess) {
                 goto done;
             }
@@ -579,7 +525,6 @@ static void ProcessEvents(
         // handling all the presents and any outstanding toggles will have to
         // wait for next batch of events.
         AddPresents(*presentEvents, &presentEventIndex, recording, checkRecordingToggle, nextRecordingToggleQpc, &hitNextRecordingToggle);
-        AddPresents(lsrData, *lsrEvents, &lsrEventIndex, recording, checkRecordingToggle, nextRecordingToggleQpc, &hitNextRecordingToggle);
         if (!hitNextRecordingToggle) {
             break;
         }
@@ -588,11 +533,13 @@ static void ProcessEvents(
         recordingToggleIndex += 1;
         recording = !recording;
         if (!recording) {
+#if 0
             IncrementRecordingCount();
             CloseOutputCsv(nullptr);
             for (auto& pair : gProcesses) {
                 CloseOutputCsv(&pair.second);
             }
+#endif
         }
     }
 
@@ -603,9 +550,10 @@ done:
     // This only applies to ConsoleOutput::Full, otherwise it's ok to just
     // leave the older presents in the history buffer since they aren't used
     // for anything.
-    if (args.mConsoleOutputType == ConsoleOutput::Full) {
+    // TODO: check
+    //if (args.mConsoleOutputType == ConsoleOutput::Full) {
         PruneHistory(*processEvents, *presentEvents, *lsrEvents);
-    }
+    //}
 
     // Clear events processed.
     processEvents->clear();
@@ -621,16 +569,12 @@ done:
     }
 
     if (DebugDone()) {
-        ExitMainThread();
+        //ExitMainThread();
     }
 }
 
 void Output()
 {
-#if !DEBUG_VERBOSE
-    auto const& args = GetCommandLineArgs();
-#endif
-
     // Structures to track processes and statistics from recorded events.
     LateStageReprojectionData lsrData;
     std::vector<ProcessEvent> processEvents;
@@ -660,6 +604,7 @@ void Output()
         // gIsRecording is the real timeline recording state.  Because we're
         // just reading it without correlation to gRecordingToggleHistory, we
         // don't need the critical section.
+#if 0
 #if !DEBUG_VERBOSE
         auto realtimeRecording = gIsRecording;
         switch (args.mConsoleOutputType) {
@@ -684,6 +629,7 @@ void Output()
             CommitConsole();
             break;
         }
+#endif
 #endif
 
         // Everything is processed and output out at this point, so if we're
@@ -716,7 +662,7 @@ void Output()
         if (processInfo->mHandle != NULL) {
             CloseHandle(processInfo->mHandle);
         }
-        CloseOutputCsv(processInfo);
+        //CloseOutputCsv(processInfo);
     }
     gProcesses.clear();
 }
@@ -737,5 +683,3 @@ void StopOutputThread()
         DeleteCriticalSection(&gRecordingToggleCS);
     }
 }
-
-#endif

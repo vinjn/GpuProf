@@ -268,7 +268,7 @@ struct SystemInfo
     }
 };
 
-struct ProcessInfo
+struct ProcInfo
 {
     unsigned int pid;
     string exeName;
@@ -287,7 +287,7 @@ struct GpuInfo
     uint32_t nvlinkMaxSpeeds[NVML_NVLINK_MAX_LINKS];
     nvmlPciInfo_t nvlinkPciInfos[NVML_NVLINK_MAX_LINKS];
 
-    vector<ProcessInfo> processInfos;
+    vector<ProcInfo> ProcInfos;
 
     // Flags to denote unsupported queries
     bool bGPUUtilSupported = true;
@@ -581,7 +581,7 @@ int update()
             ret = _nvmlDeviceGetGraphicsRunningProcesses(handle, &infoCount, nullptr);
             if (ret == NVML_ERROR_INSUFFICIENT_SIZE || ret == NVML_SUCCESS)
             {
-                vector<nvmlProcessInfo_t> infos(infoCount);
+                vector<nvmlProcInfo_t> infos(infoCount);
                 ret = _nvmlDeviceGetGraphicsRunningProcesses(handle, &infoCount, infos.data());
                 int a = 0;
             }
@@ -591,7 +591,7 @@ int update()
             ret = _nvmlDeviceGetComputeRunningProcesses(handle, &infoCount, nullptr);
             if (ret == NVML_ERROR_INSUFFICIENT_SIZE || ret == NVML_SUCCESS)
             {
-                vector<nvmlProcessInfo_t> infos(infoCount);
+                vector<nvmlProcInfo_t> infos(infoCount);
                 ret = _nvmlDeviceGetComputeRunningProcesses(handle, &infoCount, infos.data());
                 int a = 0;
             }
@@ -602,7 +602,7 @@ int update()
         if (mode == NVML_FEATURE_DISABLED)
             continue;
 
-        info.processInfos.clear();
+        info.ProcInfos.clear();
         unsigned int pidCount = 0;
         ret = _nvmlDeviceGetAccountingPids(handle, &pidCount, nullptr);
         if (pidCount > 0)
@@ -622,12 +622,12 @@ int update()
                     nvmlSystemGetProcessName(pid, name, 80);
 #endif
                     auto cpuStats = getEntryFromPID(pid);
-                    auto p = ProcessInfo();
+                    auto p = ProcInfo();
                     p.pid = pid;
                     p.exeName = cpuStats.szExeFile;
                     p.cpuStats = cpuStats;
                     p.gpuStats = gpuStats;
-                    info.processInfos.emplace_back(p);
+                    info.ProcInfos.emplace_back(p);
                 }
             }
         }
@@ -734,7 +734,7 @@ void draw()
 
             // per process info
             int k = 0;
-            for (const auto& p : info.processInfos)
+            for (const auto& p : info.ProcInfos)
             {
                 img.draw_text(140, kFontHeight * (k + 1),
                     "%s (%d): %d%% | %d%% \n",
