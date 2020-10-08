@@ -118,7 +118,7 @@ void draw()
     for (auto& window : windows)
     {
         if (window->is_keyESC()) running = false;
-        window->move(x0, y0 + idx * (window->window_height() + 31));
+        window->move(x0, y0 + idx * (WINDOW_H + 32));
 
         if (idx == 0)
         {

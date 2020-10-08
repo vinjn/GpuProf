@@ -2,6 +2,7 @@
 
 #include "def.h"
 #include <memory>
+#include <string>
 #include "../3rdparty/CImg.h"
 
 enum MetricType
@@ -23,9 +24,12 @@ enum MetricType
     METRIC_DISK_READ_SOL,
     METRIC_DISK_WRITE_SOL,
 
+    METRIC_FPS_0,
     METRIC_FPS_1,
     METRIC_FPS_2,
     METRIC_FPS_3,
+    METRIC_FPS_4,
+    METRIC_FPS_5,
 
     METRIC_COUNT,
 };
@@ -45,6 +49,8 @@ const uint8_t colors[][3] =
     { 10,122,200 },
 };
 
+extern std::string kMetricNames[METRIC_COUNT];
+
 struct MetricsInfo
 {
     static int valid_element_count;
@@ -55,5 +61,5 @@ struct MetricsInfo
 
     void addMetric(MetricType type, float value);
 
-    void draw(std::shared_ptr<cimg_library::CImgDisplay> window, cimg_library::CImg<unsigned char>& img, int beginMetricId, int endMetricId);
+    void draw(std::shared_ptr<cimg_library::CImgDisplay> window, cimg_library::CImg<unsigned char>& img, int beginMetricId, int endMetricId, bool absoluteValue = false);
 };

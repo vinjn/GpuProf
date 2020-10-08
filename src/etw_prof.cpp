@@ -20,6 +20,54 @@
 using namespace cimg_library;
 using namespace std;
 
+#define printf(...) 
+
+struct EtwInfo
+{
+    MetricsInfo metrics;
+    shared_ptr<CImgDisplay> window;
+    int metricId = 0;
+
+    // Structures to track processes and statistics from recorded events.
+    LateStageReprojectionData lsrData;
+    std::vector<ProcessEvent> processEvents;
+    std::vector<std::shared_ptr<PresentEvent>> presentEvents;
+    std::vector<std::shared_ptr<LateStageReprojectionEvent>> lsrEvents;
+    std::vector<uint64_t> recordingToggleHistory;
+    std::vector<std::pair<uint32_t, uint64_t>> terminatedProcesses;
+
+    bool setup()
+    {
+        //ElevatePrivilege(argc, argv);
+        // Start the ETW trace session (including consumer and output threads).
+
+        processEvents.reserve(128);
+        presentEvents.reserve(4096);
+        lsrEvents.reserve(4096);
+        recordingToggleHistory.reserve(16);
+        terminatedProcesses.reserve(16);
+
+        return true;
+    }
+
+    int update();
+
+    int draw()
+    {
+        // Create and display the image of the intensity profile
+        CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
+        img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
+
+        metrics.draw(window, img, METRIC_FPS_0, METRIC_FPS_0 + metricId - 1, true);
+
+        img.display(*window);
+
+        return 0;
+    }
+};
+
+static EtwInfo etwInfo;
+
 namespace {
 
     TraceSession gSession;
@@ -47,9 +95,6 @@ namespace {
     CRITICAL_SECTION gRecordingToggleCS;
     std::vector<uint64_t> gRecordingToggleHistory;
     bool gIsRecording = false;
-}
-
-namespace {
 
     typedef BOOL(WINAPI* OpenProcessTokenProc)(HANDLE ProcessHandle, DWORD DesiredAccess, PHANDLE TokenHandle);
     typedef BOOL(WINAPI* GetTokenInformationProc)(HANDLE TokenHandle, TOKEN_INFORMATION_CLASS TokenInformationClass, LPVOID TokenInformation, DWORD TokenInformationLength, DWORD* ReturnLength);
@@ -639,7 +684,7 @@ done:
     // for anything.
     // TODO: check
     //if (args.mConsoleOutputType == ConsoleOutput::Full) {
-        PruneHistory(*processEvents, *presentEvents, *lsrEvents);
+    PruneHistory(*processEvents, *presentEvents, *lsrEvents);
     //}
 
     // Clear events processed.
@@ -684,7 +729,7 @@ const char* PresentModeToString(PresentMode mode)
     }
 }
 
-void UpdateConsole(uint32_t processId, ProcessInfo const& processInfo)
+void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
 {
     // Don't display non-target or empty processes
     if (!processInfo.mTargetProcess ||
@@ -721,6 +766,14 @@ void UpdateConsole(uint32_t processId, ProcessInfo const& processInfo)
             presentN.PresentFlags,
             1000.0 * cpuAvg,
             1.0 / cpuAvg);
+
+        etwInfo.metrics.addMetric((MetricType)(METRIC_FPS_0 + etwInfo.metricId), 1000.0 * cpuAvg);
+        auto name = processInfo.mModuleName;
+        name[name.length() - 4] = '\0';
+        kMetricNames[METRIC_FPS_0 + etwInfo.metricId] = name;
+
+        etwInfo.metricId++;
+        if (etwInfo.metricId > METRIC_FPS_5) break;
 
         size_t displayCount = 0;
         uint64_t latencySum = 0;
@@ -794,10 +847,11 @@ void Output()
         // don't need the critical section.
 #if !DEBUG_VERBOSE
         auto realtimeRecording = gIsRecording;
+        etwInfo.metricId = 0; // reset id
         for (auto const& pair : gProcesses) {
-            //UpdateConsole(pair.first, pair.second);
+            UpdateMetrics(pair.first, pair.second);
         }
-        //UpdateConsole(gProcesses, lsrData);
+        //UpdateMetrics(gProcesses, lsrData);
 
         if (realtimeRecording) {
             printf("** RECORDING **\n");
@@ -843,7 +897,7 @@ void StartOutputThread()
 {
     InitializeCriticalSection(&gRecordingToggleCS);
 
-    sProcessThread = std::thread(Output);
+    //sProcessThread = std::thread(Output);
 }
 
 void StopOutputThread()
@@ -856,39 +910,6 @@ void StopOutputThread()
     }
 }
 
-struct EtwInfo
-{
-    MetricsInfo metrics;
-    shared_ptr<CImgDisplay> window;
-
-    bool setup()
-    {
-        //ElevatePrivilege(argc, argv);
-        // Start the ETW trace session (including consumer and output threads).
-
-        return true;
-    }
-
-    int update()
-    {
-        return 0;
-    }
-
-    int draw()
-    {
-        // Create and display the image of the intensity profile
-        CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
-        img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
-
-        metrics.draw(window, img, METRIC_FPS_1, METRIC_FPS_3);
-
-        img.display(*window);
-
-        return 0;
-    }
-};
-
-static EtwInfo etwInfo;
 extern vector<shared_ptr<CImgDisplay>> windows;
 
 int etw_setup()
@@ -976,6 +997,7 @@ int etw_cleanup()
     return 0;
 }
 
+
 int etw_update()
 {
     return etwInfo.update();
@@ -984,4 +1006,28 @@ int etw_update()
 int etw_draw()
 {
     return etwInfo.draw();
+}
+
+
+int EtwInfo::update()
+{
+    // Copy and process all the collected events, and update the various
+    // tracking and statistics data structures.
+    ProcessEvents(&lsrData, &processEvents, &presentEvents, &lsrEvents, &recordingToggleHistory, &terminatedProcesses);
+
+    // Display information to console if requested.  If debug build and
+    // simple console, print a heartbeat if recording.
+    //
+    // gIsRecording is the real timeline recording state.  Because we're
+    // just reading it without correlation to gRecordingToggleHistory, we
+    // don't need the critical section.
+    auto realtimeRecording = gIsRecording;
+    etwInfo.metricId = 0; // reset id
+    for (auto const& pair : gProcesses) {
+        UpdateMetrics(pair.first, pair.second);
+    }
+    // Update tracking information.
+    CheckForTerminatedRealtimeProcesses(&terminatedProcesses);
+
+    return 0;
 }

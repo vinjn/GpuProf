@@ -6,7 +6,7 @@ using namespace std;
 
 int MetricsInfo::valid_element_count = 0;
 
-const char* kMetricNames[] =
+string kMetricNames[METRIC_COUNT] =
 {
     "SM",
     "MEM",
@@ -25,9 +25,12 @@ const char* kMetricNames[] =
     "DISK R",
     "DISK W",
 
+    "FPS 0",
     "FPS 1",
     "FPS 2",
     "FPS 3",
+    "FPS 4",
+    "FPS 5",
 };
 
 const size_t COLOR_COUNT = _countof(colors);
@@ -45,7 +48,7 @@ void MetricsInfo::addMetric(MetricType type, float value)
 extern int global_mouse_x;
 extern int global_mouse_y;
 
-void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img, int beginMetricId, int endMetricId)
+void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img, int beginMetricId, int endMetricId, bool absoluteValue)
 {
     const int plotType = 1;
     const int vertexType = 1;
@@ -64,10 +67,10 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
     for (int k = beginMetricId; k <= endMetricId; k++)
     {
         img.draw_text(FONT_HEIGHT, FONT_HEIGHT * (k - beginMetricId + 1),
-            "%s: %.1f%%\n",
+            absoluteValue ? "%s: %.0f\n" : "%s: %.1f%%\n",
             colors[k % COLOR_COUNT], 0, 1, FONT_HEIGHT,
-            kMetricNames[k],
-            metrics_avg[k]);
+            kMetricNames[k].c_str(),
+            metrics_avg[k] * (absoluteValue ? 100 : 1));
     }
 
     // point tooltip
@@ -77,10 +80,10 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
         for (int k = beginMetricId; k <= endMetricId; k++)
         {
             img.draw_text(window->window_width() - 100, FONT_HEIGHT * (k - beginMetricId + 1),
-                "|%s: %.1f%%\n",
+                absoluteValue ?  "|%s: %.0f\n" : "|%s: %.1f%%\n",
                 colors[k % COLOR_COUNT], 0, 1, FONT_HEIGHT,
-                kMetricNames[k],
-                metrics[k][value_idx]);
+                kMetricNames[k].c_str(),
+                metrics[k][value_idx] * (absoluteValue ? 100 : 1));
         }
         img.draw_line(global_mouse_x, 0, global_mouse_x, window->height() - 1, colors[0], 0.5f, hatch = cimg::rol(hatch));
     }
