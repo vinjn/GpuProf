@@ -117,10 +117,14 @@
     <ClInclude Include="..\3rdparty\PresentMon\PresentData\TraceSession.hpp" />
     <ClInclude Include="..\3rdparty\PresentMon\PresentMon\PresentMon.hpp" />
     <ClInclude Include="..\src\amd_prof.h" />
+    <ClInclude Include="..\src\def.h" />
     <ClInclude Include="..\src\etw_prof.h" />
     <ClInclude Include="..\src\intel_prof.h" />
+    <ClInclude Include="..\src\metrics_info.h" />
     <ClInclude Include="..\src\nvidia_prof.h" />
     <ClInclude Include="..\src\screen_shot.h" />
+    <ClInclude Include="..\src\system_prof.h" />
+    <ClInclude Include="..\src\util_win32.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\md_calculation.cpp" />
@@ -161,8 +165,11 @@
     </ClCompile>
     <ClCompile Include="..\src\etw_prof.cpp" />
     <ClCompile Include="..\src\gpu_prof.cpp" />
+    <ClCompile Include="..\src\metrics_info.cpp" />
     <ClCompile Include="..\src\nvidia_prof.cpp" />
     <ClCompile Include="..\src\screen_shot.cpp" />
+    <ClCompile Include="..\src\system_prof.cpp" />
+    <ClCompile Include="..\src\util_win32.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

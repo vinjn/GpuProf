@@ -37,3 +37,6 @@ build/x64
 *.db
 *.suo
 /bin/*.exe
+build/.vs
+*.7z
+*.pdb

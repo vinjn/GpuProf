@@ -37,7 +37,7 @@ void usage()
 
 }
 
-int intel_prof_main(
+int intel_main(
     int argc,
     char** argv)
 {

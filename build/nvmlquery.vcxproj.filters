@@ -1,11 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="..\src\amd_prof.h" />
-    <ClInclude Include="..\src\intel_prof.h" />
-    <ClInclude Include="..\src\nvidia_prof.h" />
-    <ClInclude Include="..\3rdparty\CUDA_SDK\nvml.h" />
-    <ClInclude Include="..\3rdparty\CImg.h" />
     <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\inc\common\instrumentation\api\instr_gt_driver_ifc.h">
       <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
     </ClInclude>
@@ -54,7 +49,6 @@
     <ClInclude Include="..\3rdparty\PDH\CPdh.h">
       <Filter>PDH</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\screen_shot.h" />
     <ClInclude Include="..\3rdparty\PresentMon\PresentData\Debug.hpp">
       <Filter>PresentMon</Filter>
     </ClInclude>
@@ -91,13 +85,44 @@
     <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\NT_Process.h">
       <Filter>PresentMon</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\etw_prof.h" />
     <ClInclude Include="..\3rdparty\PresentMon\PresentMon\PresentMon.hpp">
       <Filter>PresentMon</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\etw_prof.h">
+      <Filter>prof</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\intel_prof.h">
+      <Filter>prof</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nvidia_prof.h">
+      <Filter>prof</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\system_prof.h">
+      <Filter>prof</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\amd_prof.h">
+      <Filter>prof</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\screen_shot.h">
+      <Filter>shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\util_win32.h">
+      <Filter>shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\metrics_info.h">
+      <Filter>shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\def.h">
+      <Filter>shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\CImg.h">
+      <Filter>shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\CUDA_SDK\nvml.h">
+      <Filter>shared</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\gpu_prof.cpp" />
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\md_calculation.cpp">
       <Filter>MetricsDiscoveryHelper\metrics-discovery</Filter>
     </ClCompile>
@@ -131,7 +156,6 @@
     <ClCompile Include="..\3rdparty\PDH\CPdh.cpp">
       <Filter>PDH</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\screen_shot.cpp" />
     <ClCompile Include="..\3rdparty\PresentMon\PresentData\Debug.cpp">
       <Filter>PresentMon</Filter>
     </ClCompile>
@@ -144,8 +168,6 @@
     <ClCompile Include="..\3rdparty\PresentMon\PresentData\TraceConsumer.cpp">
       <Filter>PresentMon</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\etw_prof.cpp" />
-    <ClCompile Include="..\src\nvidia_prof.cpp" />
     <ClCompile Include="..\3rdparty\PresentMon\PresentMon\Privilege.cpp">
       <Filter>PresentMon</Filter>
     </ClCompile>
@@ -164,6 +186,25 @@
     <ClCompile Include="..\3rdparty\PresentMon\PresentData\TraceSession.cpp">
       <Filter>PresentMon</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\etw_prof.cpp">
+      <Filter>prof</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvidia_prof.cpp">
+      <Filter>prof</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system_prof.cpp">
+      <Filter>prof</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\screen_shot.cpp">
+      <Filter>shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\util_win32.cpp">
+      <Filter>shared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gpu_prof.cpp" />
+    <ClCompile Include="..\src\metrics_info.cpp">
+      <Filter>shared</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MetricsDiscoveryHelper">
@@ -180,6 +221,12 @@
     </Filter>
     <Filter Include="PresentMon">
       <UniqueIdentifier>{36b6e93a-61c6-413d-973f-aabc0b2636d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="prof">
+      <UniqueIdentifier>{e0b49617-9e02-43f1-8006-f55852713205}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shared">
+      <UniqueIdentifier>{b7a4e6fb-d34e-498d-a4f9-db9eae0bed4d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

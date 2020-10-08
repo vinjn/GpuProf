@@ -16,6 +16,10 @@
 #pragma comment(lib, "Tdh")
 #include <VersionHelpers.h>
 
+#include "metrics_info.h"
+using namespace cimg_library;
+using namespace std;
+
 namespace {
 
     TraceSession gSession;
@@ -250,83 +254,6 @@ void WaitForConsumerThreadToExit()
     }
 }
 
-bool etw_setup()
-{
-    auto simple = true;
-    auto expectFilteredEvents = true;
-
-    // Create consumers
-    gPMConsumer = new PMTraceConsumer(expectFilteredEvents, simple);
-
-    // Start the session;
-    // If a session with this same name is already running, we either exit or
-    // stop it and start a new session.  This is useful if a previous process
-    // failed to properly shut down the session for some reason.
-    auto status = gSession.Start(gPMConsumer, nullptr, nullptr, mSessionName);
-
-    if (status == ERROR_ALREADY_EXISTS) {
-        if (true /*args.mStopExistingSession*/) {
-            //fprintf(stderr,
-            //    "warning: a trace session named \"%s\" is already running and it will be stopped.\n"
-            //    "         Use -session_name with a different name to start a new session.\n",
-            //    mSessionName);
-        }
-        else {
-            fprintf(stderr,
-                "error: a trace session named \"%s\" is already running. Use -stop_existing_session\n"
-                "       to stop the existing session, or use -session_name with a different name to\n"
-                "       start a new session.\n",
-                mSessionName);
-            delete gPMConsumer;
-            return false;
-        }
-
-        status = TraceSession::StopNamedSession(mSessionName);
-        if (status == ERROR_SUCCESS) {
-            status = gSession.Start(gPMConsumer, nullptr, nullptr, mSessionName);
-        }
-    }
-
-    // Report error if we failed to start a new session
-    if (status != ERROR_SUCCESS) {
-        fprintf(stderr, "error: failed to start trace session");
-        switch (status) {
-        case ERROR_FILE_NOT_FOUND:    fprintf(stderr, " (file not found)"); break;
-        case ERROR_PATH_NOT_FOUND:    fprintf(stderr, " (path not found)"); break;
-        case ERROR_BAD_PATHNAME:      fprintf(stderr, " (invalid --session_name)"); break;
-        case ERROR_ACCESS_DENIED:     fprintf(stderr, " (access denied)"); break;
-        case ERROR_FILE_CORRUPT:      fprintf(stderr, " (invalid --etl_file)"); break;
-        default:                      fprintf(stderr, " (error=%u)", status); break;
-        }
-        fprintf(stderr, ".\n");
-
-        delete gPMConsumer;
-        gPMConsumer = nullptr;
-        return false;
-    }
-
-    // -------------------------------------------------------------------------
-    // Start the consumer and output threads
-    StartConsumerThread(gSession.mTraceHandle);
-    StartOutputThread();
-
-    return true;
-}
-
-void etw_quit()
-{
-    // Stop the trace session.
-    gSession.Stop();
-
-    // Wait for the consumer and output threads to end (which are using the
-    // consumers).
-    WaitForConsumerThreadToExit();
-    StopOutputThread();
-
-    // Destruct the consumers
-    delete gPMConsumer;
-    gPMConsumer = nullptr;
-}
 
 void CheckLostReports(ULONG* eventsLost, ULONG* buffersLost)
 {
@@ -927,4 +854,134 @@ void StopOutputThread()
 
         DeleteCriticalSection(&gRecordingToggleCS);
     }
+}
+
+struct EtwInfo
+{
+    MetricsInfo metrics;
+    shared_ptr<CImgDisplay> window;
+
+    bool setup()
+    {
+        //ElevatePrivilege(argc, argv);
+        // Start the ETW trace session (including consumer and output threads).
+
+        return true;
+    }
+
+    int update()
+    {
+        return 0;
+    }
+
+    int draw()
+    {
+        // Create and display the image of the intensity profile
+        CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
+        img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
+
+        metrics.draw(window, img, METRIC_FPS_1, METRIC_FPS_3);
+
+        img.display(*window);
+
+        return 0;
+    }
+};
+
+static EtwInfo etwInfo;
+extern vector<shared_ptr<CImgDisplay>> windows;
+
+int etw_setup()
+{
+    etwInfo.setup();
+
+    etwInfo.window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, "FPS", 3);
+    windows.push_back(etwInfo.window);
+
+    auto simple = true;
+    auto expectFilteredEvents = true;
+
+    // Create consumers
+    gPMConsumer = new PMTraceConsumer(expectFilteredEvents, simple);
+
+    // Start the session;
+    // If a session with this same name is already running, we either exit or
+    // stop it and start a new session.  This is useful if a previous process
+    // failed to properly shut down the session for some reason.
+    auto status = gSession.Start(gPMConsumer, nullptr, nullptr, mSessionName);
+
+    if (status == ERROR_ALREADY_EXISTS) {
+        if (true /*args.mStopExistingSession*/) {
+            //fprintf(stderr,
+            //    "warning: a trace session named \"%s\" is already running and it will be stopped.\n"
+            //    "         Use -session_name with a different name to start a new session.\n",
+            //    mSessionName);
+        }
+        else {
+            fprintf(stderr,
+                "error: a trace session named \"%s\" is already running. Use -stop_existing_session\n"
+                "       to stop the existing session, or use -session_name with a different name to\n"
+                "       start a new session.\n",
+                mSessionName);
+            delete gPMConsumer;
+            return false;
+        }
+
+        status = TraceSession::StopNamedSession(mSessionName);
+        if (status == ERROR_SUCCESS) {
+            status = gSession.Start(gPMConsumer, nullptr, nullptr, mSessionName);
+        }
+    }
+
+    // Report error if we failed to start a new session
+    if (status != ERROR_SUCCESS) {
+        fprintf(stderr, "error: failed to start trace session");
+        switch (status) {
+        case ERROR_FILE_NOT_FOUND:    fprintf(stderr, " (file not found)"); break;
+        case ERROR_PATH_NOT_FOUND:    fprintf(stderr, " (path not found)"); break;
+        case ERROR_BAD_PATHNAME:      fprintf(stderr, " (invalid --session_name)"); break;
+        case ERROR_ACCESS_DENIED:     fprintf(stderr, " (access denied)"); break;
+        case ERROR_FILE_CORRUPT:      fprintf(stderr, " (invalid --etl_file)"); break;
+        default:                      fprintf(stderr, " (error=%u)", status); break;
+        }
+        fprintf(stderr, ".\n");
+
+        delete gPMConsumer;
+        gPMConsumer = nullptr;
+        return false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Start the consumer and output threads
+    StartConsumerThread(gSession.mTraceHandle);
+    StartOutputThread();
+
+    return 0;
+}
+
+int etw_cleanup()
+{
+    // Stop the trace session.
+    gSession.Stop();
+
+    // Wait for the consumer and output threads to end (which are using the
+    // consumers).
+    WaitForConsumerThreadToExit();
+    StopOutputThread();
+
+    // Destruct the consumers
+    delete gPMConsumer;
+    gPMConsumer = nullptr;
+
+    return 0;
+}
+
+int etw_update()
+{
+    return etwInfo.update();
+}
+
+int etw_draw()
+{
+    return etwInfo.draw();
 }

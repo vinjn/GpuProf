@@ -6,7 +6,8 @@
 
 #pragma comment(lib, "Gdiplus")
 
-int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
+int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
+{
 	using namespace Gdiplus;
 	UINT  num = 0;
 	UINT  size = 0;
