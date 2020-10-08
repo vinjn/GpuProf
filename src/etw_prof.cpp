@@ -1,6 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 #include <windows.h>
+#include <shellapi.h>
+#include <TlHelp32.h>
 #include <evntcons.h> // must include after windows.h
 #include <unordered_map>
 
@@ -8,6 +10,7 @@
 #include "../3rdparty/PresentMon/PresentData/TraceSession.hpp"
 #include "../3rdparty/PresentMon/PresentData/PresentMonTraceConsumer.hpp"
 #include "../3rdparty/PresentMon/PresentData/MixedRealityTraceConsumer.hpp"
+#include "../3rdparty/PresentMon/PresentMon/PresentMon.hpp"
 #include <Shlwapi.h>
 
 #pragma comment(lib, "Tdh")
@@ -42,11 +45,173 @@ namespace {
     bool gIsRecording = false;
 }
 
+namespace {
 
-struct LateStageReprojectionData
+    typedef BOOL(WINAPI* OpenProcessTokenProc)(HANDLE ProcessHandle, DWORD DesiredAccess, PHANDLE TokenHandle);
+    typedef BOOL(WINAPI* GetTokenInformationProc)(HANDLE TokenHandle, TOKEN_INFORMATION_CLASS TokenInformationClass, LPVOID TokenInformation, DWORD TokenInformationLength, DWORD* ReturnLength);
+    typedef BOOL(WINAPI* LookupPrivilegeValueAProc)(LPCSTR lpSystemName, LPCSTR lpName, PLUID lpLuid);
+    typedef BOOL(WINAPI* AdjustTokenPrivilegesProc)(HANDLE TokenHandle, BOOL DisableAllPrivileges, PTOKEN_PRIVILEGES NewState, DWORD BufferLength, PTOKEN_PRIVILEGES PreviousState, PDWORD ReturnLength);
+
+    struct Advapi {
+        HMODULE HModule;
+        OpenProcessTokenProc OpenProcessToken;
+        GetTokenInformationProc GetTokenInformation;
+        LookupPrivilegeValueAProc LookupPrivilegeValueA;
+        AdjustTokenPrivilegesProc AdjustTokenPrivileges;
+
+        Advapi()
+            : HModule(NULL)
+        {
+        }
+
+        ~Advapi()
+        {
+            if (HModule != NULL) {
+                FreeLibrary(HModule);
+            }
+        }
+
+        bool Load()
+        {
+            HModule = LoadLibraryA("advapi32.dll");
+            if (HModule == NULL) {
+                return false;
+            }
+
+            OpenProcessToken = (OpenProcessTokenProc)GetProcAddress(HModule, "OpenProcessToken");
+            GetTokenInformation = (GetTokenInformationProc)GetProcAddress(HModule, "GetTokenInformation");
+            LookupPrivilegeValueA = (LookupPrivilegeValueAProc)GetProcAddress(HModule, "LookupPrivilegeValueA");
+            AdjustTokenPrivileges = (AdjustTokenPrivilegesProc)GetProcAddress(HModule, "AdjustTokenPrivileges");
+
+            if (OpenProcessToken == nullptr ||
+                GetTokenInformation == nullptr ||
+                LookupPrivilegeValueA == nullptr ||
+                AdjustTokenPrivileges == nullptr) {
+                FreeLibrary(HModule);
+                HModule = NULL;
+                return false;
+            }
+
+            return true;
+        }
+
+        bool HasElevatedPrivilege() const
+        {
+            HANDLE hToken = NULL;
+            if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
+                return false;
+            }
+
+            /** BEGIN WORKAROUND: struct TOKEN_ELEVATION and enum value TokenElevation
+             * are not defined in the vs2003 headers, so we reproduce them here. **/
+            enum { WA_TokenElevation = 20 };
+            DWORD TokenIsElevated = 0;
+            /** END WA **/
+
+            DWORD dwSize = 0;
+            if (!GetTokenInformation(hToken, (TOKEN_INFORMATION_CLASS)WA_TokenElevation, &TokenIsElevated, sizeof(TokenIsElevated), &dwSize)) {
+                TokenIsElevated = 0;
+            }
+
+            CloseHandle(hToken);
+
+            return TokenIsElevated != 0;
+        }
+
+        bool EnableDebugPrivilege() const
+        {
+            HANDLE hToken = NULL;
+            if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken)) {
+                return false;
+            }
+
+            TOKEN_PRIVILEGES tp = {};
+            tp.PrivilegeCount = 1;
+            tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+            bool enabled =
+                LookupPrivilegeValueA(NULL, "SeDebugPrivilege", &tp.Privileges[0].Luid) &&
+                AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), nullptr, nullptr) &&
+                GetLastError() != ERROR_NOT_ALL_ASSIGNED;
+
+            CloseHandle(hToken);
+
+            return enabled;
+        }
+    };
+
+    int RestartAsAdministrator(
+        int argc,
+        char** argv)
+    {
+        char exe_path[MAX_PATH] = {};
+        GetModuleFileNameA(NULL, exe_path, sizeof(exe_path));
+
+        // Combine arguments into single array
+        char args[1024] = {};
+        for (int idx = 0, i = 1; i < argc && (size_t)idx < sizeof(args); ++i) {
+            if (idx >= sizeof(args)) {
+                fprintf(stderr, "internal error: command line arguments too long.\n");
+                return false; // was truncated
+            }
+
+            if (argv[i][0] != '\"' && strchr(argv[i], ' ')) {
+                idx += snprintf(args + idx, sizeof(args) - idx, " \"%s\"", argv[i]);
+            }
+            else {
+                idx += snprintf(args + idx, sizeof(args) - idx, " %s", argv[i]);
+            }
+        }
+
+        SHELLEXECUTEINFOA info = {};
+        info.cbSize = sizeof(info);
+        info.fMask = SEE_MASK_NOCLOSEPROCESS;
+        info.lpVerb = "runas";
+        info.lpFile = exe_path;
+        info.lpParameters = args;
+        info.nShow = SW_SHOW;
+        if (!ShellExecuteExA(&info) || info.hProcess == NULL) {
+            fprintf(stderr, "error: failed to elevate privilege ");
+            int e = GetLastError();
+            switch (e) {
+            case ERROR_FILE_NOT_FOUND:    fprintf(stderr, "(file not found).\n"); break;
+            case ERROR_PATH_NOT_FOUND:    fprintf(stderr, "(path not found).\n"); break;
+            case ERROR_DLL_NOT_FOUND:     fprintf(stderr, "(dll not found).\n"); break;
+            case ERROR_ACCESS_DENIED:     fprintf(stderr, "(access denied).\n"); break;
+            case ERROR_CANCELLED:         fprintf(stderr, "(cancelled).\n"); break;
+            case ERROR_NOT_ENOUGH_MEMORY: fprintf(stderr, "(out of memory).\n"); break;
+            case ERROR_SHARING_VIOLATION: fprintf(stderr, "(sharing violation).\n"); break;
+            default:                      fprintf(stderr, "(%u).\n", e); break;
+            }
+            return 2;
+        }
+
+        WaitForSingleObject(info.hProcess, INFINITE);
+
+        DWORD code = 0;
+        GetExitCodeProcess(info.hProcess, &code);
+        int e = GetLastError();
+        (void)e;
+        CloseHandle(info.hProcess);
+
+        return code;
+    }
+}
+// Returning from this function means keep running in this process.
+void ElevatePrivilege(int argc, char** argv)
 {
+    // Try to load advapi to check and set required privilege.
+    Advapi advapi;
+    if (advapi.Load() && advapi.EnableDebugPrivilege()) {
+        return;
+    }
 
-};
+    // Try to restart PresentMon with admin privileve
+    exit(RestartAsAdministrator(argc, argv));
+}
+
+void StartOutputThread();
+void StopOutputThread();
 
 void Consume(TRACEHANDLE traceHandle)
 {
@@ -143,6 +308,7 @@ bool etw_setup()
     // -------------------------------------------------------------------------
     // Start the consumer and output threads
     StartConsumerThread(gSession.mTraceHandle);
+    StartOutputThread();
 
     return true;
 }
@@ -155,6 +321,7 @@ void etw_quit()
     // Wait for the consumer and output threads to end (which are using the
     // consumers).
     WaitForConsumerThreadToExit();
+    StopOutputThread();
 
     // Destruct the consumers
     delete gPMConsumer;
@@ -228,21 +395,6 @@ void UpdateRecordingToggles(size_t nextIndex)
     }
 }
 
-struct SwapChainData {
-    enum { PRESENT_HISTORY_MAX_COUNT = 120 };
-    std::shared_ptr<PresentEvent> mPresentHistory[PRESENT_HISTORY_MAX_COUNT];
-    uint32_t mPresentHistoryCount;
-    uint32_t mNextPresentIndex;
-    uint32_t mLastDisplayedPresentIndex;
-};
-
-struct ProcessInfo {
-    std::string mModuleName;
-    std::unordered_map<uint64_t, SwapChainData> mSwapChain;
-    HANDLE mHandle;
-    bool mTargetProcess;
-};
-
 // Processes are handled differently when running in realtime collection vs.
 // ETL collection.  When reading an ETL, we receive NT_PROCESS events whenever
 // a process is created or exits which we use to update the active processes.
@@ -288,6 +440,8 @@ void InitProcessInfo(ProcessInfo* processInfo, uint32_t processId, HANDLE handle
     }
 }
 
+extern PROCESSENTRY32 getEntryFromPID(DWORD pid);
+
 ProcessInfo* GetProcessInfo(uint32_t processId)
 {
     auto result = gProcesses.emplace(processId, ProcessInfo());
@@ -300,14 +454,20 @@ ProcessInfo* GetProcessInfo(uint32_t processId)
         // happen in realtime capture.
         HANDLE handle = NULL;
         char const* processName = "<error>";
+#if 0
+        char path[MAX_PATH];
+        DWORD numChars = sizeof(path);
         {
-            char path[MAX_PATH];
             DWORD numChars = sizeof(path);
             handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
             if (QueryFullProcessImageNameA(handle, 0, path, &numChars)) {
                 processName = PathFindFileNameA(path);
             }
         }
+#else
+        auto entry = getEntryFromPID(processId);
+        processName = entry.szExeFile;
+#endif
 
         InitProcessInfo(processInfo, processId, handle, processName);
     }
@@ -457,7 +617,7 @@ void PruneHistory(
     }
 }
 
-void ProcessEvents(
+static void ProcessEvents(
     LateStageReprojectionData* lsrData,
     std::vector<ProcessEvent>* processEvents,
     std::vector<std::shared_ptr<PresentEvent>>* presentEvents,
@@ -573,6 +733,107 @@ done:
     }
 }
 
+const char* RuntimeToString(Runtime rt)
+{
+    switch (rt) {
+    case Runtime::DXGI: return "DXGI";
+    case Runtime::D3D9: return "D3D9";
+    default: return "Other";
+    }
+}
+
+const char* PresentModeToString(PresentMode mode)
+{
+    switch (mode) {
+    case PresentMode::Hardware_Legacy_Flip: return "Hardware: Legacy Flip";
+    case PresentMode::Hardware_Legacy_Copy_To_Front_Buffer: return "Hardware: Legacy Copy to front buffer";
+    case PresentMode::Hardware_Independent_Flip: return "Hardware: Independent Flip";
+    case PresentMode::Composed_Flip: return "Composed: Flip";
+    case PresentMode::Composed_Copy_GPU_GDI: return "Composed: Copy with GPU GDI";
+    case PresentMode::Composed_Copy_CPU_GDI: return "Composed: Copy with CPU GDI";
+    case PresentMode::Composed_Composition_Atlas: return "Composed: Composition Atlas";
+    case PresentMode::Hardware_Composed_Independent_Flip: return "Hardware Composed: Independent Flip";
+    default: return "Other";
+    }
+}
+
+void UpdateConsole(uint32_t processId, ProcessInfo const& processInfo)
+{
+    // Don't display non-target or empty processes
+    if (!processInfo.mTargetProcess ||
+        processInfo.mModuleName.empty() ||
+        processInfo.mSwapChain.empty()) {
+        return;
+    }
+
+    auto empty = true;
+
+    for (auto const& pair : processInfo.mSwapChain) {
+        auto address = pair.first;
+        auto const& chain = pair.second;
+
+        // Only show swapchain data if there at least two presents in the
+        // history.
+        if (chain.mPresentHistoryCount < 2) {
+            continue;
+        }
+
+        if (empty) {
+            empty = false;
+            printf("%s[%d]:\n", processInfo.mModuleName.c_str(), processId);
+        }
+
+        auto const& present0 = *chain.mPresentHistory[(chain.mNextPresentIndex - chain.mPresentHistoryCount) % SwapChainData::PRESENT_HISTORY_MAX_COUNT];
+        auto const& presentN = *chain.mPresentHistory[(chain.mNextPresentIndex - 1) % SwapChainData::PRESENT_HISTORY_MAX_COUNT];
+        auto cpuAvg = QpcDeltaToSeconds(presentN.QpcTime - present0.QpcTime) / (chain.mPresentHistoryCount - 1);
+
+        printf("    %016llX (%s): SyncInterval=%d Flags=%d %.2lf ms/frame (%.1lf fps",
+            address,
+            RuntimeToString(presentN.Runtime),
+            presentN.SyncInterval,
+            presentN.PresentFlags,
+            1000.0 * cpuAvg,
+            1.0 / cpuAvg);
+
+        size_t displayCount = 0;
+        uint64_t latencySum = 0;
+        uint64_t display0ScreenTime = 0;
+        PresentEvent* displayN = nullptr;
+
+        for (uint32_t i = 0; i < chain.mPresentHistoryCount; ++i) {
+            auto const& p = chain.mPresentHistory[(chain.mNextPresentIndex - chain.mPresentHistoryCount + i) % SwapChainData::PRESENT_HISTORY_MAX_COUNT];
+            if (p->FinalState == PresentResult::Presented) {
+                if (displayCount == 0) {
+                    display0ScreenTime = p->ScreenTime;
+                }
+                displayN = p.get();
+                latencySum += p->ScreenTime - p->QpcTime;
+                displayCount += 1;
+            }
+        }
+
+        if (displayCount >= 2) {
+            printf(", %.1lf fps displayed", (double)(displayCount - 1) / QpcDeltaToSeconds(displayN->ScreenTime - display0ScreenTime));
+        }
+
+        if (displayCount >= 1) {
+            printf(", %.2lf ms latency", 1000.0 * QpcDeltaToSeconds(latencySum) / displayCount);
+        }
+
+        printf(")");
+
+        if (displayCount > 0) {
+            printf(" %s", PresentModeToString(displayN->PresentMode));
+        }
+
+        printf("\n");
+    }
+
+    if (!empty) {
+        printf("\n");
+    }
+}
+
 void Output()
 {
     // Structures to track processes and statistics from recorded events.
@@ -604,34 +865,18 @@ void Output()
         // gIsRecording is the real timeline recording state.  Because we're
         // just reading it without correlation to gRecordingToggleHistory, we
         // don't need the critical section.
-#if 0
 #if !DEBUG_VERBOSE
         auto realtimeRecording = gIsRecording;
-        switch (args.mConsoleOutputType) {
-        case ConsoleOutput::None:
-            break;
-        case ConsoleOutput::Simple:
-#if _DEBUG
-            if (realtimeRecording) {
-                printf(".");
-            }
-#endif
-            break;
-        case ConsoleOutput::Full:
-            for (auto const& pair : gProcesses) {
-                UpdateConsole(pair.first, pair.second);
-            }
-            UpdateConsole(gProcesses, lsrData);
-
-            if (realtimeRecording) {
-                ConsolePrintLn("** RECORDING **");
-            }
-            CommitConsole();
-            break;
+        for (auto const& pair : gProcesses) {
+            //UpdateConsole(pair.first, pair.second);
         }
-#endif
-#endif
+        //UpdateConsole(gProcesses, lsrData);
 
+        if (realtimeRecording) {
+            printf("** RECORDING **\n");
+        }
+        //CommitConsole();
+#endif
         // Everything is processed and output out at this point, so if we're
         // quiting we don't need to update the rest.
         if (quit) {

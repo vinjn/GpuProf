@@ -10,8 +10,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PresentMon", "PresentMon\Pr
 		{892028E5-32F6-45FC-8AB2-90FCBCAC4BF6} = {892028E5-32F6-45FC-8AB2-90FCBCAC4BF6}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PresentMonTests", "Tests\PresentMonTests.vcxproj", "{0F60DFD9-208E-443E-8D01-43C902B458A6}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -56,22 +54,6 @@ Global
 		{4EB9794B-1F12-48CE-ADC1-917E9810F29E}.Release|x64.Build.0 = Release|x64
 		{4EB9794B-1F12-48CE-ADC1-917E9810F29E}.Release|x86.ActiveCfg = Release|Win32
 		{4EB9794B-1F12-48CE-ADC1-917E9810F29E}.Release|x86.Build.0 = Release|Win32
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Debug|ARM.ActiveCfg = Debug|ARM
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Debug|ARM.Build.0 = Debug|ARM
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Debug|ARM64.Build.0 = Debug|ARM64
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Debug|x64.ActiveCfg = Debug|x64
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Debug|x64.Build.0 = Debug|x64
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Debug|x86.ActiveCfg = Debug|Win32
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Debug|x86.Build.0 = Debug|Win32
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Release|ARM.ActiveCfg = Release|ARM
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Release|ARM.Build.0 = Release|ARM
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Release|ARM64.ActiveCfg = Release|ARM64
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Release|ARM64.Build.0 = Release|ARM64
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Release|x64.ActiveCfg = Release|x64
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Release|x64.Build.0 = Release|x64
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Release|x86.ActiveCfg = Release|Win32
-		{0F60DFD9-208E-443E-8D01-43C902B458A6}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -174,8 +174,6 @@ int RestartAsAdministrator(
 }
 
 }
-
-#if 0
 // Returning from this function means keep running in this process.
 void ElevatePrivilege(int argc, char** argv)
 {
@@ -207,16 +205,3 @@ void ElevatePrivilege(int argc, char** argv)
     // Try to restart PresentMon with admin privileve
     exit(RestartAsAdministrator(argc, argv));
 }
-
-#else
-void ElevatePrivilege(int argc, char** argv)
-{
-    // Try to load advapi to check and set required privilege.
-    Advapi advapi;
-    if (advapi.Load() && advapi.EnableDebugPrivilege()) {
-        return;
-    }
-
-    exit(RestartAsAdministrator(argc, argv));
-}
-#endif
