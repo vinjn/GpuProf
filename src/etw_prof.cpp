@@ -767,7 +767,7 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
             1000.0 * cpuAvg,
             1.0 / cpuAvg);
 
-        etwInfo.metrics.addMetric((MetricType)(METRIC_FPS_0 + etwInfo.metricId), 1000.0 * cpuAvg);
+        etwInfo.metrics.addMetric((MetricType)(METRIC_FPS_0 + etwInfo.metricId), 1.0 / cpuAvg);
         auto name = processInfo.mModuleName;
         name[name.length() - 4] = '\0';
         kMetricNames[METRIC_FPS_0 + etwInfo.metricId] = name;
@@ -919,7 +919,7 @@ int etw_setup()
     etwInfo.window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, "FPS", 3);
     windows.push_back(etwInfo.window);
 
-    auto simple = true;
+    auto simple = false;
     auto expectFilteredEvents = true;
 
     // Create consumers

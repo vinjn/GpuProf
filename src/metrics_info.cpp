@@ -67,10 +67,10 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
     for (int k = beginMetricId; k <= endMetricId; k++)
     {
         img.draw_text(FONT_HEIGHT, FONT_HEIGHT * (k - beginMetricId + 1),
-            absoluteValue ? "%s: %.0f\n" : "%s: %.1f%%\n",
+            absoluteValue ? "%s: %.1f\n" : "%s: %.1f%%\n",
             colors[k % COLOR_COUNT], 0, 1, FONT_HEIGHT,
             kMetricNames[k].c_str(),
-            metrics_avg[k] * (absoluteValue ? 100 : 1));
+            metrics_avg[k]);
     }
 
     // point tooltip
@@ -80,10 +80,9 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
         for (int k = beginMetricId; k <= endMetricId; k++)
         {
             img.draw_text(window->window_width() - 100, FONT_HEIGHT * (k - beginMetricId + 1),
-                absoluteValue ?  "|%s: %.0f\n" : "|%s: %.1f%%\n",
+                absoluteValue ?  "|%.1f\n" : "|%.1f%%\n",
                 colors[k % COLOR_COUNT], 0, 1, FONT_HEIGHT,
-                kMetricNames[k].c_str(),
-                metrics[k][value_idx] * (absoluteValue ? 100 : 1));
+                metrics[k][value_idx]);
         }
         img.draw_line(global_mouse_x, 0, global_mouse_x, window->height() - 1, colors[0], 0.5f, hatch = cimg::rol(hatch));
     }
