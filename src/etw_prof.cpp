@@ -22,6 +22,17 @@ using namespace std;
 
 #define printf(...) 
 
+const char* blackList[] =
+{
+    "dwm",
+    "devenv",
+    "chrome",
+    "explorer",
+    "StartMenuExperienceHost",
+    "SearchUI",
+    "Code",
+};
+
 struct EtwInfo
 {
     MetricsInfo metrics;
@@ -738,7 +749,13 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
         return;
     }
 
-    auto empty = true;
+    auto procName = processInfo.mModuleName;
+    procName = procName.substr(0, procName.length() - 4);
+    for (const auto& name : blackList)
+    {
+        if (procName == name)
+            return;
+    }
 
     for (auto const& pair : processInfo.mSwapChain) {
         auto address = pair.first;
@@ -748,11 +765,6 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
         // history.
         if (chain.mPresentHistoryCount < 2) {
             continue;
-        }
-
-        if (empty) {
-            empty = false;
-            printf("%s[%d]:\n", processInfo.mModuleName.c_str(), processId);
         }
 
         auto const& present0 = *chain.mPresentHistory[(chain.mNextPresentIndex - chain.mPresentHistoryCount) % SwapChainData::PRESENT_HISTORY_MAX_COUNT];
@@ -767,10 +779,9 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
             1000.0 * cpuAvg,
             1.0 / cpuAvg);
 
+
         etwInfo.metrics.addMetric((MetricType)(METRIC_FPS_0 + etwInfo.metricId), 1.0 / cpuAvg);
-        auto name = processInfo.mModuleName;
-        name[name.length() - 4] = '\0';
-        kMetricNames[METRIC_FPS_0 + etwInfo.metricId] = name;
+        kMetricNames[METRIC_FPS_0 + etwInfo.metricId] = procName;
 
         etwInfo.metricId++;
         if (etwInfo.metricId > METRIC_FPS_5) break;
@@ -806,10 +817,6 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
             printf(" %s", PresentModeToString(displayN->PresentMode));
         }
 
-        printf("\n");
-    }
-
-    if (!empty) {
         printf("\n");
     }
 }
