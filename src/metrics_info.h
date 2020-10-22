@@ -53,13 +53,14 @@ extern std::string kMetricNames[METRIC_COUNT];
 
 struct MetricsInfo
 {
-    static int valid_element_count;
     static const int HISTORY_COUNT = WINDOW_W / 2;
     float metrics[METRIC_COUNT][HISTORY_COUNT] = {};
     float metrics_sum[METRIC_COUNT] = {};
     float metrics_avg[METRIC_COUNT] = {};
+    int valid_element_count[METRIC_COUNT] = {};
 
     void addMetric(MetricType type, float value);
+    void resetMetric(MetricType type);
 
     void draw(std::shared_ptr<cimg_library::CImgDisplay> window, cimg_library::CImg<unsigned char>& img, int beginMetricId, int endMetricId, bool absoluteValue = false);
 };

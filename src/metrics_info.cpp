@@ -4,8 +4,6 @@
 using namespace cimg_library;
 using namespace std;
 
-int MetricsInfo::valid_element_count = 0;
-
 string kMetricNames[METRIC_COUNT] =
 {
     "SM",
@@ -25,12 +23,12 @@ string kMetricNames[METRIC_COUNT] =
     "DISK R",
     "DISK W",
 
-    "FPS 0",
-    "FPS 1",
-    "FPS 2",
-    "FPS 3",
-    "FPS 4",
-    "FPS 5",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
 };
 
 const size_t COLOR_COUNT = _countof(colors);
@@ -39,7 +37,10 @@ void MetricsInfo::addMetric(MetricType type, float value)
 {
     metrics_sum[type] -= metrics[type][0];
     metrics_sum[type] += value;
-    metrics_avg[type] = metrics_sum[type] / valid_element_count;
+
+    if (valid_element_count[type] < MetricsInfo::HISTORY_COUNT)
+        valid_element_count[type]++;
+    metrics_avg[type] = metrics_sum[type] / valid_element_count[type];
     for (int i = 0; i < HISTORY_COUNT - 1; i++)
         metrics[type][i] = metrics[type][i + 1];
     metrics[type][HISTORY_COUNT - 1] = value;
@@ -85,5 +86,16 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
                 metrics[k][value_idx]);
         }
         img.draw_line(global_mouse_x, 0, global_mouse_x, window->height() - 1, colors[0], 0.5f, hatch = cimg::rol(hatch));
+    }
+}
+
+void MetricsInfo::resetMetric(MetricType type)
+{
+    valid_element_count[type] = 0;
+    metrics_sum[type] = 0;
+    metrics_avg[type] = 0;
+    for (int k = 0; k < MetricsInfo::HISTORY_COUNT; k++)
+    {
+        metrics[type][k] = 0;
     }
 }

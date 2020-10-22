@@ -68,9 +68,6 @@ int update()
     etw_update();
     nvidia_update();
 
-    if (MetricsInfo::valid_element_count < MetricsInfo::HISTORY_COUNT)
-        MetricsInfo::valid_element_count++;
-
     // GUI
 #ifdef WIN32_WITH_THIS
     SHORT state = GetAsyncKeyState(VK_SPACE);

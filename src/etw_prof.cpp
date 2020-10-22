@@ -31,13 +31,15 @@ const char* blackList[] =
     "StartMenuExperienceHost",
     "SearchUI",
     "Code",
+    "csrss",
 };
 
 struct EtwInfo
 {
     MetricsInfo metrics;
     shared_ptr<CImgDisplay> window;
-    int metricId = 0;
+    int displayMetricMax = 0;
+    bool isMetricsUpdated[METRIC_COUNT] = {};
 
     // Structures to track processes and statistics from recorded events.
     LateStageReprojectionData lsrData;
@@ -49,9 +51,7 @@ struct EtwInfo
 
     bool setup()
     {
-        //ElevatePrivilege(argc, argv);
         // Start the ETW trace session (including consumer and output threads).
-
         processEvents.reserve(128);
         presentEvents.reserve(4096);
         lsrEvents.reserve(4096);
@@ -69,7 +69,7 @@ struct EtwInfo
         CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
         img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
 
-        metrics.draw(window, img, METRIC_FPS_0, METRIC_FPS_0 + metricId - 1, true);
+        metrics.draw(window, img, METRIC_FPS_0, displayMetricMax, true);
 
         img.display(*window);
 
@@ -106,168 +106,6 @@ namespace {
     CRITICAL_SECTION gRecordingToggleCS;
     std::vector<uint64_t> gRecordingToggleHistory;
     bool gIsRecording = false;
-
-    typedef BOOL(WINAPI* OpenProcessTokenProc)(HANDLE ProcessHandle, DWORD DesiredAccess, PHANDLE TokenHandle);
-    typedef BOOL(WINAPI* GetTokenInformationProc)(HANDLE TokenHandle, TOKEN_INFORMATION_CLASS TokenInformationClass, LPVOID TokenInformation, DWORD TokenInformationLength, DWORD* ReturnLength);
-    typedef BOOL(WINAPI* LookupPrivilegeValueAProc)(LPCSTR lpSystemName, LPCSTR lpName, PLUID lpLuid);
-    typedef BOOL(WINAPI* AdjustTokenPrivilegesProc)(HANDLE TokenHandle, BOOL DisableAllPrivileges, PTOKEN_PRIVILEGES NewState, DWORD BufferLength, PTOKEN_PRIVILEGES PreviousState, PDWORD ReturnLength);
-
-    struct Advapi {
-        HMODULE HModule;
-        OpenProcessTokenProc OpenProcessToken;
-        GetTokenInformationProc GetTokenInformation;
-        LookupPrivilegeValueAProc LookupPrivilegeValueA;
-        AdjustTokenPrivilegesProc AdjustTokenPrivileges;
-
-        Advapi()
-            : HModule(NULL)
-        {
-        }
-
-        ~Advapi()
-        {
-            if (HModule != NULL) {
-                FreeLibrary(HModule);
-            }
-        }
-
-        bool Load()
-        {
-            HModule = LoadLibraryA("advapi32.dll");
-            if (HModule == NULL) {
-                return false;
-            }
-
-            OpenProcessToken = (OpenProcessTokenProc)GetProcAddress(HModule, "OpenProcessToken");
-            GetTokenInformation = (GetTokenInformationProc)GetProcAddress(HModule, "GetTokenInformation");
-            LookupPrivilegeValueA = (LookupPrivilegeValueAProc)GetProcAddress(HModule, "LookupPrivilegeValueA");
-            AdjustTokenPrivileges = (AdjustTokenPrivilegesProc)GetProcAddress(HModule, "AdjustTokenPrivileges");
-
-            if (OpenProcessToken == nullptr ||
-                GetTokenInformation == nullptr ||
-                LookupPrivilegeValueA == nullptr ||
-                AdjustTokenPrivileges == nullptr) {
-                FreeLibrary(HModule);
-                HModule = NULL;
-                return false;
-            }
-
-            return true;
-        }
-
-        bool HasElevatedPrivilege() const
-        {
-            HANDLE hToken = NULL;
-            if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
-                return false;
-            }
-
-            /** BEGIN WORKAROUND: struct TOKEN_ELEVATION and enum value TokenElevation
-             * are not defined in the vs2003 headers, so we reproduce them here. **/
-            enum { WA_TokenElevation = 20 };
-            DWORD TokenIsElevated = 0;
-            /** END WA **/
-
-            DWORD dwSize = 0;
-            if (!GetTokenInformation(hToken, (TOKEN_INFORMATION_CLASS)WA_TokenElevation, &TokenIsElevated, sizeof(TokenIsElevated), &dwSize)) {
-                TokenIsElevated = 0;
-            }
-
-            CloseHandle(hToken);
-
-            return TokenIsElevated != 0;
-        }
-
-        bool EnableDebugPrivilege() const
-        {
-            HANDLE hToken = NULL;
-            if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken)) {
-                return false;
-            }
-
-            TOKEN_PRIVILEGES tp = {};
-            tp.PrivilegeCount = 1;
-            tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-
-            bool enabled =
-                LookupPrivilegeValueA(NULL, "SeDebugPrivilege", &tp.Privileges[0].Luid) &&
-                AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), nullptr, nullptr) &&
-                GetLastError() != ERROR_NOT_ALL_ASSIGNED;
-
-            CloseHandle(hToken);
-
-            return enabled;
-        }
-    };
-
-    int RestartAsAdministrator(
-        int argc,
-        char** argv)
-    {
-        char exe_path[MAX_PATH] = {};
-        GetModuleFileNameA(NULL, exe_path, sizeof(exe_path));
-
-        // Combine arguments into single array
-        char args[1024] = {};
-        for (int idx = 0, i = 1; i < argc && (size_t)idx < sizeof(args); ++i) {
-            if (idx >= sizeof(args)) {
-                fprintf(stderr, "internal error: command line arguments too long.\n");
-                return false; // was truncated
-            }
-
-            if (argv[i][0] != '\"' && strchr(argv[i], ' ')) {
-                idx += snprintf(args + idx, sizeof(args) - idx, " \"%s\"", argv[i]);
-            }
-            else {
-                idx += snprintf(args + idx, sizeof(args) - idx, " %s", argv[i]);
-            }
-        }
-
-        SHELLEXECUTEINFOA info = {};
-        info.cbSize = sizeof(info);
-        info.fMask = SEE_MASK_NOCLOSEPROCESS;
-        info.lpVerb = "runas";
-        info.lpFile = exe_path;
-        info.lpParameters = args;
-        info.nShow = SW_SHOW;
-        if (!ShellExecuteExA(&info) || info.hProcess == NULL) {
-            fprintf(stderr, "error: failed to elevate privilege ");
-            int e = GetLastError();
-            switch (e) {
-            case ERROR_FILE_NOT_FOUND:    fprintf(stderr, "(file not found).\n"); break;
-            case ERROR_PATH_NOT_FOUND:    fprintf(stderr, "(path not found).\n"); break;
-            case ERROR_DLL_NOT_FOUND:     fprintf(stderr, "(dll not found).\n"); break;
-            case ERROR_ACCESS_DENIED:     fprintf(stderr, "(access denied).\n"); break;
-            case ERROR_CANCELLED:         fprintf(stderr, "(cancelled).\n"); break;
-            case ERROR_NOT_ENOUGH_MEMORY: fprintf(stderr, "(out of memory).\n"); break;
-            case ERROR_SHARING_VIOLATION: fprintf(stderr, "(sharing violation).\n"); break;
-            default:                      fprintf(stderr, "(%u).\n", e); break;
-            }
-            return 2;
-        }
-
-        WaitForSingleObject(info.hProcess, INFINITE);
-
-        DWORD code = 0;
-        GetExitCodeProcess(info.hProcess, &code);
-        int e = GetLastError();
-        (void)e;
-        CloseHandle(info.hProcess);
-
-        return code;
-    }
-}
-// Returning from this function means keep running in this process.
-void ElevatePrivilege(int argc, char** argv)
-{
-    // Try to load advapi to check and set required privilege.
-    Advapi advapi;
-    if (advapi.Load() && advapi.EnableDebugPrivilege()) {
-        return;
-    }
-
-    // Try to restart PresentMon with admin privileve
-    exit(RestartAsAdministrator(argc, argv));
 }
 
 void StartOutputThread();
@@ -749,11 +587,12 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
         return;
     }
 
-    auto procName = processInfo.mModuleName;
-    procName = procName.substr(0, procName.length() - 4);
+    auto exeName = processInfo.mModuleName;
+    exeName = exeName.substr(0, exeName.length() - 4);
+    exeName = exeName + string("(") + to_string(processId) + string(")");
     for (const auto& name : blackList)
     {
-        if (procName == name)
+        if (exeName.find(name) != string::npos)
             return;
     }
 
@@ -779,12 +618,41 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
             1000.0 * cpuAvg,
             1.0 / cpuAvg);
 
+        int metricId = 0;
+        // first, find matching id
+        for (int k = METRIC_FPS_0; k < METRIC_COUNT; k++)
+        {
+            if (exeName == kMetricNames[k])
+            {
+                metricId = k;
+                break;
+            }
+        }
 
-        etwInfo.metrics.addMetric((MetricType)(METRIC_FPS_0 + etwInfo.metricId), 1.0 / cpuAvg);
-        kMetricNames[METRIC_FPS_0 + etwInfo.metricId] = procName;
+        // if can't find any, assign a valid id
+        if (metricId == 0)
+        {
+            for (int k = METRIC_FPS_0; k < METRIC_COUNT; k++)
+            {
+                if (kMetricNames[k].empty())
+                {
+                    metricId = k;
+                    kMetricNames[metricId] = exeName;
+                    break;
+                }
+            }
+        }
 
-        etwInfo.metricId++;
-        if (etwInfo.metricId > METRIC_FPS_5) break;
+        // if no valid id remains, cry!!
+        if (metricId == 0)
+            break;
+
+        etwInfo.metrics.addMetric((MetricType)metricId, 1.0 / cpuAvg);
+        etwInfo.isMetricsUpdated[(MetricType)metricId] = true;
+        if (metricId >= METRIC_FPS_5)
+            break;
+
+        etwInfo.displayMetricMax = metricId;
 
         size_t displayCount = 0;
         uint64_t latencySum = 0;
@@ -818,86 +686,11 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
         }
 
         printf("\n");
+
+        // only deal with first swapchain
+        // TODO: fix it
+        break; 
     }
-}
-
-void Output()
-{
-    // Structures to track processes and statistics from recorded events.
-    LateStageReprojectionData lsrData;
-    std::vector<ProcessEvent> processEvents;
-    std::vector<std::shared_ptr<PresentEvent>> presentEvents;
-    std::vector<std::shared_ptr<LateStageReprojectionEvent>> lsrEvents;
-    std::vector<uint64_t> recordingToggleHistory;
-    std::vector<std::pair<uint32_t, uint64_t>> terminatedProcesses;
-    processEvents.reserve(128);
-    presentEvents.reserve(4096);
-    lsrEvents.reserve(4096);
-    recordingToggleHistory.reserve(16);
-    terminatedProcesses.reserve(16);
-
-    for (;;) {
-        // Read gQuit here, but then check it after processing queued events.
-        // This ensures that we call DequeueAnalyzedInfo() at least once after
-        // events have stopped being collected so that all events are included.
-        auto quit = gQuit;
-
-        // Copy and process all the collected events, and update the various
-        // tracking and statistics data structures.
-        ProcessEvents(&lsrData, &processEvents, &presentEvents, &lsrEvents, &recordingToggleHistory, &terminatedProcesses);
-
-        // Display information to console if requested.  If debug build and
-        // simple console, print a heartbeat if recording.
-        //
-        // gIsRecording is the real timeline recording state.  Because we're
-        // just reading it without correlation to gRecordingToggleHistory, we
-        // don't need the critical section.
-#if !DEBUG_VERBOSE
-        auto realtimeRecording = gIsRecording;
-        etwInfo.metricId = 0; // reset id
-        for (auto const& pair : gProcesses) {
-            UpdateMetrics(pair.first, pair.second);
-        }
-        //UpdateMetrics(gProcesses, lsrData);
-
-        if (realtimeRecording) {
-            printf("** RECORDING **\n");
-        }
-        //CommitConsole();
-#endif
-        // Everything is processed and output out at this point, so if we're
-        // quiting we don't need to update the rest.
-        if (quit) {
-            break;
-        }
-
-        // Update tracking information.
-        CheckForTerminatedRealtimeProcesses(&terminatedProcesses);
-
-        // Sleep to reduce overhead.
-        ::Sleep(1);
-    }
-
-    // Output warning if events were lost.
-    ULONG eventsLost = 0;
-    ULONG buffersLost = 0;
-    CheckLostReports(&eventsLost, &buffersLost);
-    if (buffersLost > 0) {
-        fprintf(stderr, "warning: %lu ETW buffers were lost.\n", buffersLost);
-    }
-    if (eventsLost > 0) {
-        fprintf(stderr, "warning: %lu ETW events were lost.\n", eventsLost);
-    }
-
-    // Close all CSV and process handles
-    for (auto& pair : gProcesses) {
-        auto processInfo = &pair.second;
-        if (processInfo->mHandle != NULL) {
-            CloseHandle(processInfo->mHandle);
-        }
-        //CloseOutputCsv(processInfo);
-    }
-    gProcesses.clear();
 }
 
 void StartOutputThread()
@@ -1004,7 +797,6 @@ int etw_cleanup()
     return 0;
 }
 
-
 int etw_update()
 {
     return etwInfo.update();
@@ -1029,9 +821,22 @@ int EtwInfo::update()
     // just reading it without correlation to gRecordingToggleHistory, we
     // don't need the critical section.
     auto realtimeRecording = gIsRecording;
-    etwInfo.metricId = 0; // reset id
-    for (auto const& pair : gProcesses) {
+    displayMetricMax = 0; // reset id
+    for (auto& item : isMetricsUpdated)
+        item = false;
+    for (auto const& pair : gProcesses)
+    {
         UpdateMetrics(pair.first, pair.second);
+    }
+
+    // kill dead processes
+    for (int i = METRIC_FPS_0; i < METRIC_COUNT; i++)
+    {
+        if (!isMetricsUpdated[i])
+        {
+            kMetricNames[i] = "";
+            metrics.resetMetric(MetricType(i));
+        }
     }
     // Update tracking information.
     CheckForTerminatedRealtimeProcesses(&terminatedProcesses);
