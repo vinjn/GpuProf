@@ -39,6 +39,7 @@
 #include "etw_prof.h"
 #include "system_prof.h"
 #include "metrics_info.h"
+#include "gui_imgui.h"
 
 #include "screen_shot.h"
 
@@ -48,6 +49,8 @@ using namespace std;
 using namespace cimg_library;
 
 bool isCanvasVisible = true;
+bool isRemoteGuiEnabled = false;
+ImGuiContext* imguiCtx = NULL;
 
 vector<shared_ptr<CImgDisplay>> windows;
 
@@ -134,12 +137,39 @@ void draw()
     }
 }
 
+void drawImgui()
+{
+    updateRemoteImgui();
+    ImGui_ImplCinder_NewFrameGuard();
+
+    ImGui::Begin("GpuProf");
+
+    ImGui::End();
+
+    ImGui_ImplCinder_PostDraw();
+}
+
 // Application entry point
 int main(int argc, char* argv[])
 {
 #if 0
     intel_main(0, NULL);
 #endif
+
+    if (argc >= 2)
+    {
+        char* addr = argv[1];
+        isRemoteGuiEnabled = true;
+        imguiCtx = ImGui::CreateContext();
+        ImGui::StyleColorsDark();
+        ImGuiIO& io = ImGui::GetIO();
+        io.Fonts->AddFontDefault();
+        unsigned char* pixels;
+        int width, height;
+        io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
+
+        createRemoteImgui(addr);
+    }
 
     //gdiscreen();
 
@@ -156,6 +186,10 @@ int main(int argc, char* argv[])
         if (isCanvasVisible)
         {
             draw();
+        }
+        if (isRemoteGuiEnabled)
+        {
+            drawImgui();
         }
 
         ::Sleep(100);

@@ -24,8 +24,8 @@ setup():
     });
 */
 
-void createRemoteImgui(const char* address, int port = 7002);
-void updateRemoteImgui(bool ENABLE_REMOTE_GUI);
+void createRemoteImgui(const char* address = "127.0.0.1", int port = 7003);
+void updateRemoteImgui();
 
 void ImGui_ImplCinder_NewFrameGuard();
-void ImGui_ImplCinder_PostDraw(bool ENABLE_REMOTE_GUI, bool ENABLE_LOCAL_GUI);
+void ImGui_ImplCinder_PostDraw();

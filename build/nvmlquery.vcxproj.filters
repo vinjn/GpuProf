@@ -121,6 +121,60 @@
     <ClInclude Include="..\3rdparty\CUDA_SDK\nvml.h">
       <Filter>shared</Filter>
     </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui\imstb_truetype.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui\imstb_textedit.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui\imstb_rectpack.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui\imgui_stdlib.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui_remote\lz4\lz4.h">
+      <Filter>imgui_remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui_remote\lz4\lz4frame.h">
+      <Filter>imgui_remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui_remote\lz4\lz4frame_static.h">
+      <Filter>imgui_remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui_remote\lz4\lz4hc.h">
+      <Filter>imgui_remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui_remote\lz4\xxhash.h">
+      <Filter>imgui_remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui_remote\webby\webby.h">
+      <Filter>imgui_remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui_remote\webby\webby_unix.h">
+      <Filter>imgui_remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui_remote\webby\webby_win32.h">
+      <Filter>imgui_remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui_remote\imgui_remote_webby.h">
+      <Filter>imgui_remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\imgui_remote\imgui_remote.h">
+      <Filter>imgui_remote</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gui_imgui.h">
+      <Filter>shared</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\md_calculation.cpp">
@@ -205,6 +259,39 @@
     <ClCompile Include="..\src\metrics_info.cpp">
       <Filter>shared</Filter>
     </ClCompile>
+    <ClCompile Include="..\3rdparty\imgui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\imgui\imgui_stdlib.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\imgui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\imgui_remote\lz4\lz4.c">
+      <Filter>imgui_remote</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\imgui_remote\lz4\lz4frame.c">
+      <Filter>imgui_remote</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\imgui_remote\lz4\lz4hc.c">
+      <Filter>imgui_remote</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\imgui_remote\lz4\xxhash.c">
+      <Filter>imgui_remote</Filter>
+    </ClCompile>
+    <ClCompile Include="..\3rdparty\imgui_remote\webby\webby.c">
+      <Filter>imgui_remote</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gui_imgui.cpp">
+      <Filter>shared</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MetricsDiscoveryHelper">
@@ -227,6 +314,12 @@
     </Filter>
     <Filter Include="shared">
       <UniqueIdentifier>{b7a4e6fb-d34e-498d-a4f9-db9eae0bed4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{2df013a3-f96d-4746-b3ab-b0de85ca08c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui_remote">
+      <UniqueIdentifier>{1f62119d-b0b9-4661-9626-3e8dbd9de74a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

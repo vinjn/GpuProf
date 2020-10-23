@@ -87,6 +87,23 @@
   <ItemGroup>
     <ClInclude Include="..\3rdparty\CImg.h" />
     <ClInclude Include="..\3rdparty\CUDA_SDK\nvml.h" />
+    <ClInclude Include="..\3rdparty\imgui\imconfig.h" />
+    <ClInclude Include="..\3rdparty\imgui\imgui.h" />
+    <ClInclude Include="..\3rdparty\imgui\imgui_internal.h" />
+    <ClInclude Include="..\3rdparty\imgui\imgui_stdlib.h" />
+    <ClInclude Include="..\3rdparty\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\3rdparty\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\3rdparty\imgui\imstb_truetype.h" />
+    <ClInclude Include="..\3rdparty\imgui_remote\imgui_remote.h" />
+    <ClInclude Include="..\3rdparty\imgui_remote\imgui_remote_webby.h" />
+    <ClInclude Include="..\3rdparty\imgui_remote\lz4\lz4.h" />
+    <ClInclude Include="..\3rdparty\imgui_remote\lz4\lz4frame.h" />
+    <ClInclude Include="..\3rdparty\imgui_remote\lz4\lz4frame_static.h" />
+    <ClInclude Include="..\3rdparty\imgui_remote\lz4\lz4hc.h" />
+    <ClInclude Include="..\3rdparty\imgui_remote\lz4\xxhash.h" />
+    <ClInclude Include="..\3rdparty\imgui_remote\webby\webby.h" />
+    <ClInclude Include="..\3rdparty\imgui_remote\webby\webby_unix.h" />
+    <ClInclude Include="..\3rdparty\imgui_remote\webby\webby_win32.h" />
     <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\inc\common\instrumentation\api\instr_gt_driver_ifc.h" />
     <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\inc\common\instrumentation\api\metrics_discovery_api.h" />
     <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\inc\common\instrumentation\api\metrics_discovery_internal_api.h" />
@@ -119,6 +136,7 @@
     <ClInclude Include="..\src\amd_prof.h" />
     <ClInclude Include="..\src\def.h" />
     <ClInclude Include="..\src\etw_prof.h" />
+    <ClInclude Include="..\src\gui_imgui.h" />
     <ClInclude Include="..\src\intel_prof.h" />
     <ClInclude Include="..\src\metrics_info.h" />
     <ClInclude Include="..\src\nvidia_prof.h" />
@@ -127,6 +145,16 @@
     <ClInclude Include="..\src\util_win32.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\3rdparty\imgui\imgui.cpp" />
+    <ClCompile Include="..\3rdparty\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\3rdparty\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\3rdparty\imgui\imgui_stdlib.cpp" />
+    <ClCompile Include="..\3rdparty\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\3rdparty\imgui_remote\lz4\lz4.c" />
+    <ClCompile Include="..\3rdparty\imgui_remote\lz4\lz4frame.c" />
+    <ClCompile Include="..\3rdparty\imgui_remote\lz4\lz4hc.c" />
+    <ClCompile Include="..\3rdparty\imgui_remote\lz4\xxhash.c" />
+    <ClCompile Include="..\3rdparty\imgui_remote\webby\webby.c" />
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\md_calculation.cpp" />
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\common\iu_debug.c" />
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\win\iu_os.cpp" />
@@ -165,6 +193,7 @@
     </ClCompile>
     <ClCompile Include="..\src\etw_prof.cpp" />
     <ClCompile Include="..\src\gpu_prof.cpp" />
+    <ClCompile Include="..\src\gui_imgui.cpp" />
     <ClCompile Include="..\src\metrics_info.cpp" />
     <ClCompile Include="..\src\nvidia_prof.cpp" />
     <ClCompile Include="..\src\screen_shot.cpp" />

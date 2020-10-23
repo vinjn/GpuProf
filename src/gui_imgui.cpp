@@ -4,21 +4,21 @@
 
 #pragma comment(lib, "Ws2_32")
 
-void    ImGui_ImplOpenGL3_NewFrame() {}
-void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data) {}
-
 static bool sTriggerNewFrame = false;
+static INT64 g_TicksPerSecond = 0;
+static INT64 g_Time = 0;
 
 void createRemoteImgui(const char* address, int port)
 {
     ImGui::RemoteInit(address, port);
     sTriggerNewFrame = true;
+
+    ::QueryPerformanceFrequency((LARGE_INTEGER*)&g_TicksPerSecond);
+    ::QueryPerformanceCounter((LARGE_INTEGER*)&g_Time);
 }
 
-void updateRemoteImgui(bool ENABLE_REMOTE_GUI)
+void updateRemoteImgui()
 {
-    if (!ENABLE_REMOTE_GUI) return;
-
     ImGui::RemoteUpdate();
     ImGui::RemoteInput input;
     if (ImGui::RemoteGetInput(input))
@@ -57,18 +57,16 @@ void ImGui_ImplCinder_NewFrameGuard() {
     if (!sTriggerNewFrame)
         return;
 
-    ImGui_ImplOpenGL3_NewFrame();
-
     ImGuiIO& io = ImGui::GetIO();
     IM_ASSERT(io.Fonts->IsBuilt()); // Font atlas needs to be built, call renderer _NewFrame() function e.g. ImGui_ImplOpenGL3_NewFrame() 
 
     // Setup display size
-    io.DisplaySize = { 640, 480 };
+    io.DisplaySize = { 1024, 768 };
 
     // Setup time step
-    static double g_Time = 0.0f;
-    double current_time = 1024;
-    io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f / 60.0f);
+    INT64 current_time;
+    ::QueryPerformanceCounter((LARGE_INTEGER*)&current_time);
+    io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
     g_Time = current_time;
 
     ImGui::NewFrame();
@@ -76,13 +74,10 @@ void ImGui_ImplCinder_NewFrameGuard() {
     sTriggerNewFrame = false;
 }
 
-void ImGui_ImplCinder_PostDraw(bool ENABLE_REMOTE_GUI, bool ENABLE_LOCAL_GUI)
+void ImGui_ImplCinder_PostDraw()
 {
     ImGui::Render();
     auto draw_data = ImGui::GetDrawData();
-    if (ENABLE_REMOTE_GUI)
-        ImGui::RemoteDraw(draw_data->CmdLists, draw_data->CmdListsCount);
-    if (ENABLE_LOCAL_GUI)
-        ImGui_ImplOpenGL3_RenderDrawData(draw_data);
+    ImGui::RemoteDraw(draw_data->CmdLists, draw_data->CmdListsCount);
     sTriggerNewFrame = true;
 }
