@@ -5,7 +5,9 @@
 using namespace cimg_library;
 using namespace std;
 
+// TODO
 extern vector<shared_ptr<CImgDisplay>> windows;
+extern bool isCanvasVisible;
 
 namespace
 {
@@ -27,7 +29,6 @@ namespace
     double diskWrite = 0;
 };
 
-
 int system_setup()
 {
 
@@ -36,8 +37,11 @@ int system_setup()
     pdh.AddCounter(df_PDH_DISK_READ_TOTAL, nIdx_DiskRead);
     pdh.AddCounter(df_PDH_DISK_WRITE_TOTAL, nIdx_DiskWrite);
 
-    window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, "System", 3);
-    windows.push_back(window);
+    if (isCanvasVisible)
+    {
+        window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, "System", 3);
+        windows.push_back(window);
+    }
 
     return 0;
 }

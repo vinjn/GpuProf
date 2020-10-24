@@ -388,8 +388,10 @@ void NvidiaInfo::draw()
     img.display(*window);
 }
 
+// TODO
 static vector<NvidiaInfo> NvidiaInfos;
 extern vector<shared_ptr<CImgDisplay>> windows;
+extern bool isCanvasVisible;
 uint32_t uiNumGPUs = 0;
 
 int nvidia_setup()
@@ -444,8 +446,11 @@ int nvidia_setup()
         auto& info = NvidiaInfos[iDevIDX];
         info.deviceId = iDevIDX;
         info.setup();
-        info.window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, info.cDevicename, 3);
-        windows.push_back(info.window);
+        if (isCanvasVisible)
+        {
+            info.window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, info.cDevicename, 3);
+            windows.push_back(info.window);
+        }
     }
     printf("------------------------------------------------------------\n");
 

@@ -7,9 +7,18 @@
 static bool sTriggerNewFrame = false;
 static INT64 g_TicksPerSecond = 0;
 static INT64 g_Time = 0;
+ImGuiContext* imguiCtx = NULL;
 
 void createRemoteImgui(const char* address, int port)
 {
+    imguiCtx = ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->AddFontDefault();
+    unsigned char* pixels;
+    int width, height;
+    io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
+
     ImGui::RemoteInit(address, port);
     sTriggerNewFrame = true;
 

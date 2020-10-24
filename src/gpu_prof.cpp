@@ -24,7 +24,7 @@
  */
 
 #define _HAS_STD_BYTE 0
-#define GPU_PROF_VERSION "1.0 dev"
+#define GPU_PROF_VERSION "1.0"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -50,7 +50,6 @@ using namespace cimg_library;
 
 bool isCanvasVisible = true;
 bool isRemoteGuiEnabled = false;
-ImGuiContext* imguiCtx = NULL;
 
 vector<shared_ptr<CImgDisplay>> windows;
 
@@ -166,13 +165,7 @@ int main(int argc, char* argv[])
     {
         char* addr = argv[1];
         isRemoteGuiEnabled = true;
-        imguiCtx = ImGui::CreateContext();
-        ImGui::StyleColorsDark();
-        ImGuiIO& io = ImGui::GetIO();
-        io.Fonts->AddFontDefault();
-        unsigned char* pixels;
-        int width, height;
-        io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
+        isCanvasVisible = false;
 
         createRemoteImgui(addr);
     }
