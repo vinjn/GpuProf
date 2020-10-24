@@ -126,6 +126,11 @@ struct NvidiaInfo
     int updatePerProcessInfo();
 
     void draw();
+
+    void drawImgui()
+    {
+        metrics.drawImgui(cDevicename, METRIC_SM_SOL, METRIC_FB_USAGE);
+    }
 };
 
 int NvidiaInfo::setup()
@@ -485,4 +490,14 @@ int nvidia_cleanup()
     auto nvRetValue = _nvmlShutdown();
 
     return nvRetValue;
+}
+
+int nvidia_draw_imgui()
+{
+    for (auto& info : NvidiaInfos)
+    {
+        info.drawImgui();
+    }
+
+    return 0;
 }

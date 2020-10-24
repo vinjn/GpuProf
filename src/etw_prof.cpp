@@ -34,7 +34,7 @@ const char* blackList[] =
     "csrss",
 };
 
-struct EtwInfo
+namespace
 {
     MetricsInfo metrics;
     shared_ptr<CImgDisplay> window;
@@ -48,36 +48,7 @@ struct EtwInfo
     std::vector<std::shared_ptr<LateStageReprojectionEvent>> lsrEvents;
     std::vector<uint64_t> recordingToggleHistory;
     std::vector<std::pair<uint32_t, uint64_t>> terminatedProcesses;
-
-    bool setup()
-    {
-        // Start the ETW trace session (including consumer and output threads).
-        processEvents.reserve(128);
-        presentEvents.reserve(4096);
-        lsrEvents.reserve(4096);
-        recordingToggleHistory.reserve(16);
-        terminatedProcesses.reserve(16);
-
-        return true;
-    }
-
-    int update();
-
-    int draw()
-    {
-        // Create and display the image of the intensity profile
-        CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
-        img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
-
-        metrics.draw(window, img, METRIC_FPS_0, displayMetricMax, true);
-
-        img.display(*window);
-
-        return 0;
-    }
 };
-
-static EtwInfo etwInfo;
 
 namespace {
 
@@ -647,12 +618,12 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
         if (metricId == 0)
             break;
 
-        etwInfo.metrics.addMetric((MetricType)metricId, 1.0 / cpuAvg);
-        etwInfo.isMetricsUpdated[(MetricType)metricId] = true;
+        metrics.addMetric((MetricType)metricId, 1.0 / cpuAvg);
+        isMetricsUpdated[(MetricType)metricId] = true;
         if (metricId >= METRIC_FPS_5)
             break;
 
-        etwInfo.displayMetricMax = metricId;
+        displayMetricMax = metricId;
 
         size_t displayCount = 0;
         uint64_t latencySum = 0;
@@ -714,10 +685,15 @@ extern vector<shared_ptr<CImgDisplay>> windows;
 
 int etw_setup()
 {
-    etwInfo.setup();
+    // Start the ETW trace session (including consumer and output threads).
+    processEvents.reserve(128);
+    presentEvents.reserve(4096);
+    lsrEvents.reserve(4096);
+    recordingToggleHistory.reserve(16);
+    terminatedProcesses.reserve(16);
 
-    etwInfo.window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, "FPS", 3);
-    windows.push_back(etwInfo.window);
+    window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, "FPS", 3);
+    windows.push_back(window);
 
     auto simple = false;
     auto expectFilteredEvents = true;
@@ -797,18 +773,21 @@ int etw_cleanup()
     return 0;
 }
 
-int etw_update()
-{
-    return etwInfo.update();
-}
-
 int etw_draw()
 {
-    return etwInfo.draw();
+    // Create and display the image of the intensity profile
+    CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
+    img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
+
+    metrics.draw(window, img, METRIC_FPS_0, displayMetricMax, true);
+
+    img.display(*window);
+
+    return 1;
 }
 
 
-int EtwInfo::update()
+int etw_update()
 {
     // Copy and process all the collected events, and update the various
     // tracking and statistics data structures.
@@ -840,6 +819,13 @@ int EtwInfo::update()
     }
     // Update tracking information.
     CheckForTerminatedRealtimeProcesses(&terminatedProcesses);
+
+    return 0;
+}
+
+int etw_draw_imgui()
+{
+    metrics.drawImgui("FPS", METRIC_FPS_0, displayMetricMax, true);
 
     return 0;
 }

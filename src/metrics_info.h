@@ -8,8 +8,8 @@
 enum MetricType
 {
     METRIC_SM_SOL,
-    METRIC_MEM_SOL,
     METRIC_FB_USAGE,
+    METRIC_MEM_SOL,
     METRIC_NVENC_SOL,
     METRIC_NVDEC_SOL,
     METRIC_SM_CLK,
@@ -63,4 +63,5 @@ struct MetricsInfo
     void resetMetric(MetricType type);
 
     void draw(std::shared_ptr<cimg_library::CImgDisplay> window, cimg_library::CImg<unsigned char>& img, int beginMetricId, int endMetricId, bool absoluteValue = false);
+    void drawImgui(const char* panelName, int beginMetricId, int endMetricId, bool absoluteValue = false);
 };

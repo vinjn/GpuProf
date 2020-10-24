@@ -269,16 +269,16 @@ namespace ImGui {
 				break;
 				// Disconnect
 			case WebSocketServer::Disconnect:
-				printf( "ImGui client: DISCONNECT\n" );
+				//printf( "ImGui client: DISCONNECT\n" );
 				ClientActive = false;
 				break;
 				// Ping
 			case WebSocketServer::Ping:
-				printf( "ImGui client: PING\n" );
+				//printf( "ImGui client: PING\n" );
 				break;
 				// Pong
 			case WebSocketServer::Pong:
-				printf( "ImGui client: PONG\n" );
+				//printf( "ImGui client: PONG\n" );
 				break;
 			default:
 				assert( 0 );

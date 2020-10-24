@@ -142,7 +142,13 @@ void drawImgui()
     updateRemoteImgui();
     ImGui_ImplCinder_NewFrameGuard();
 
-    ImGui::Begin("GpuProf");
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(1024, 768));
+    ImGui::Begin("GpuProf " GPU_PROF_VERSION " from vinjn.con");
+
+    system_draw_imgui();
+    etw_draw_imgui();
+    nvidia_draw_imgui();
 
     ImGui::End();
 

@@ -1,5 +1,6 @@
 #include "../3rdparty/CImg.h"
 #include "metrics_info.h"
+#include "../3rdparty/imgui/imgui.h"
 
 using namespace cimg_library;
 using namespace std;
@@ -7,8 +8,8 @@ using namespace std;
 string kMetricNames[METRIC_COUNT] =
 {
     "SM",
+    "RAM",
     "MEM",
-    "FB",
     "ENC",
     "DEC",
     "SM CLK",
@@ -19,7 +20,7 @@ string kMetricNames[METRIC_COUNT] =
     "NVLK RX",
 
     "CPU",
-    "MEM",
+    "RAM",
     "DISK R",
     "DISK W",
 
@@ -98,4 +99,21 @@ void MetricsInfo::resetMetric(MetricType type)
     {
         metrics[type][k] = 0;
     }
+}
+
+void MetricsInfo::drawImgui(const char* panelName, int beginMetricId, int endMetricId, bool absoluteValue)
+{
+    for (int k = beginMetricId; k <= endMetricId; k++)
+    {
+        char label[32];
+        sprintf(label, "%s - %s", panelName, kMetricNames[k].c_str());
+        char overlay[32];
+        sprintf(overlay, absoluteValue ? "avg %.1f" : "avg %.1f%%", metrics_avg[k]);
+        ImGui::PlotLines(label, metrics[k], MetricsInfo::HISTORY_COUNT, 0, overlay, 0.0f, 30, ImVec2(0, 60));
+        //img.draw_text(window->window_width() - 100, FONT_HEIGHT * (k - beginMetricId + 1),
+        //    absoluteValue ? "|%.1f\n" : "|%.1f%%\n",
+        //    colors[k % COLOR_COUNT], 0, 1, FONT_HEIGHT,
+        //    metrics[k][value_idx]);
+    }
+    //img.draw_line(global_mouse_x, 0, global_mouse_x, window->height() - 1, colors[0], 0.5f, hatch = cimg::rol(hatch));
 }
