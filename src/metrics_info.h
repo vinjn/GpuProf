@@ -10,6 +10,7 @@ enum MetricType
     METRIC_SM_SOL,
     METRIC_FB_USAGE,
     METRIC_MEM_SOL,
+    METRIC_TEMPERATURE,
     METRIC_NVENC_SOL,
     METRIC_NVDEC_SOL,
     METRIC_SM_CLK,
@@ -50,6 +51,7 @@ const uint8_t colors[][3] =
 };
 
 extern std::string kMetricNames[METRIC_COUNT];
+extern bool kMetricAbsolute[METRIC_COUNT];
 
 struct MetricsInfo
 {

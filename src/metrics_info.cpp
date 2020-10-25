@@ -10,6 +10,7 @@ string kMetricNames[METRIC_COUNT] =
     "SM",
     "RAM",
     "MEM",
+    "TEMP",
     "ENC",
     "DEC",
     "SM CLK",
@@ -31,6 +32,12 @@ string kMetricNames[METRIC_COUNT] =
     "",
     "",
 };
+
+bool kMetricAbsolute[METRIC_COUNT] =
+{
+
+}
+
 
 const size_t COLOR_COUNT = _countof(colors);
 

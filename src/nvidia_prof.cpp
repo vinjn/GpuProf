@@ -214,6 +214,12 @@ int NvidiaInfo::update()
     metrics.addMetric(METRIC_MEM_SOL, nvUtilData.memory);
     metrics.addMetric(METRIC_FB_USAGE, ulFrameBufferUsedMBytes * 100.0f / ulFrameBufferTotalMBytes);
 
+    // power and temprature
+    uint32_t temp = 0;
+    nvRetValue = _nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU, &temp);
+    CHECK_NVML(nvRetValue, nvmlDeviceGetTemperature);
+    metrics.addMetric(METRIC_TEMPERATURE, temp);
+
     // Get the video encoder utilization (where supported)
     uint32_t uiVidEncoderUtil = 0u;
     uint32_t uiVideEncoderLastSample = 0u;
