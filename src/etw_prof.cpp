@@ -560,7 +560,7 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
 
     auto exeName = processInfo.mModuleName;
     exeName = exeName.substr(0, exeName.length() - 4);
-    exeName = exeName + string("(") + to_string(processId) + string(")");
+    exeName = exeName + string(" (") + to_string(processId) + string(")");
     for (const auto& name : blackList)
     {
         if (exeName.find(name) != string::npos)
@@ -593,7 +593,7 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
         // first, find matching id
         for (int k = METRIC_FPS_0; k < METRIC_COUNT; k++)
         {
-            if (exeName == kMetricNames[k])
+            if (exeName == kMetricMetas[k].name)
             {
                 metricId = k;
                 break;
@@ -605,10 +605,10 @@ void UpdateMetrics(uint32_t processId, ProcessInfo const& processInfo)
         {
             for (int k = METRIC_FPS_0; k < METRIC_COUNT; k++)
             {
-                if (kMetricNames[k].empty())
+                if (kMetricMetas[k].name.empty())
                 {
                     metricId = k;
-                    kMetricNames[metricId] = exeName;
+                    kMetricMetas[metricId].name = exeName;
                     break;
                 }
             }
@@ -784,7 +784,7 @@ int etw_draw()
     CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
     img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
 
-    metrics.draw(window, img, METRIC_FPS_0, displayMetricMax, true);
+    metrics.draw(window, img, METRIC_FPS_0, displayMetricMax);
 
     img.display(*window);
 
@@ -814,12 +814,12 @@ int etw_update()
     }
 
     // kill dead processes
-    for (int i = METRIC_FPS_0; i < METRIC_COUNT; i++)
+    for (int k = METRIC_FPS_0; k < METRIC_COUNT; k++)
     {
-        if (!isMetricsUpdated[i])
+        if (!isMetricsUpdated[k])
         {
-            kMetricNames[i] = "";
-            metrics.resetMetric(MetricType(i));
+            kMetricMetas[k].name = "";
+            metrics.resetMetric(MetricType(k));
         }
     }
     // Update tracking information.
@@ -830,7 +830,7 @@ int etw_update()
 
 int etw_draw_imgui()
 {
-    metrics.drawImgui("FPS", METRIC_FPS_0, displayMetricMax, true);
+    metrics.drawImgui("FPS", METRIC_FPS_0, displayMetricMax);
 
     return 0;
 }

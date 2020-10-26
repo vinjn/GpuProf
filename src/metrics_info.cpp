@@ -5,39 +5,34 @@
 using namespace cimg_library;
 using namespace std;
 
-string kMetricNames[METRIC_COUNT] =
+MetaType kMetricMetas[METRIC_COUNT] =
 {
-    "SM",
-    "RAM",
-    "MEM",
-    "TEMP",
-    "ENC",
-    "DEC",
-    "SM CLK",
-    "MEM CLK",
-    "PCIE TX",
-    "PCIE RX",
-    "NVLK TX",
-    "NVLK RX",
+    {"SM", "%"},
+    {"RAM", "%"},
+    {"MEM", "%"},
+    {"TEMP", "C"},
+    {"POWER", "W"},
+    {"ENC", "%"},
+    {"DEC", "%"},
+    {"SM CLK", "%"},
+    {"MEM CLK", "%"},
+    {"PCIE TX", "%"},
+    {"PCIE RX", "%"},
+    {"NVLK TX", "%"},
+    {"NVLK RX", "%"},
 
-    "CPU",
-    "RAM",
-    "DISK R",
-    "DISK W",
+    {"CPU", "%"},
+    {"RAM", "%"},
+    {"DISK R", "%"},
+    {"DISK W", "%"},
 
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
+    {"", ""},
+    {"", ""},
+    {"", ""},
+    {"", ""},
+    {"", ""},
+    {"", ""},
 };
-
-bool kMetricAbsolute[METRIC_COUNT] =
-{
-
-}
-
 
 const size_t COLOR_COUNT = _countof(colors);
 
@@ -57,7 +52,7 @@ void MetricsInfo::addMetric(MetricType type, float value)
 extern int global_mouse_x;
 extern int global_mouse_y;
 
-void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img, int beginMetricId, int endMetricId, bool absoluteValue)
+void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img, int beginMetricId, int endMetricId)
 {
     const int plotType = 1;
     const int vertexType = 1;
@@ -76,10 +71,11 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
     for (int k = beginMetricId; k <= endMetricId; k++)
     {
         img.draw_text(FONT_HEIGHT, FONT_HEIGHT * (k - beginMetricId + 1),
-            absoluteValue ? "%s: %.1f\n" : "%s: %.1f%%\n",
+            "%s: %.1f%s\n",
             colors[k % COLOR_COUNT], 0, 1, FONT_HEIGHT,
-            kMetricNames[k].c_str(),
-            metrics_avg[k]);
+            kMetricMetas[k].name.c_str(),
+            metrics_avg[k],
+            kMetricMetas[k].suffix.c_str());
     }
 
     // point tooltip
@@ -89,9 +85,11 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
         for (int k = beginMetricId; k <= endMetricId; k++)
         {
             img.draw_text(window->window_width() - 100, FONT_HEIGHT * (k - beginMetricId + 1),
-                absoluteValue ?  "|%.1f\n" : "|%.1f%%\n",
+                "|%.1f%s\n",
                 colors[k % COLOR_COUNT], 0, 1, FONT_HEIGHT,
-                metrics[k][value_idx]);
+                metrics[k][value_idx],
+                kMetricMetas[k].suffix.c_str()
+            );
         }
         img.draw_line(global_mouse_x, 0, global_mouse_x, window->height() - 1, colors[0], 0.5f, hatch = cimg::rol(hatch));
     }
@@ -108,14 +106,14 @@ void MetricsInfo::resetMetric(MetricType type)
     }
 }
 
-void MetricsInfo::drawImgui(const char* panelName, int beginMetricId, int endMetricId, bool absoluteValue)
+void MetricsInfo::drawImgui(const char* panelName, int beginMetricId, int endMetricId)
 {
     for (int k = beginMetricId; k <= endMetricId; k++)
     {
         char label[32];
-        sprintf(label, "%s - %s", panelName, kMetricNames[k].c_str());
+        sprintf(label, "%s - %s", panelName, kMetricMetas[k].name.c_str());
         char overlay[32];
-        sprintf(overlay, absoluteValue ? "avg %.1f" : "avg %.1f%%", metrics_avg[k]);
+        sprintf(overlay, "avg %.1f%s", metrics_avg[k], kMetricMetas[k].suffix.c_str());
         ImGui::PlotLines(label, metrics[k], MetricsInfo::HISTORY_COUNT, 0, overlay, 0.0f, 30, ImVec2(0, 60));
         //img.draw_text(window->window_width() - 100, FONT_HEIGHT * (k - beginMetricId + 1),
         //    absoluteValue ? "|%.1f\n" : "|%.1f%%\n",

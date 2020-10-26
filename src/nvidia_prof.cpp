@@ -84,8 +84,6 @@ void ShowErrorDetails(const nvmlReturn_t nvRetVal, const char* pFunctionName)
     fprintf(stderr, "[%s] - %s\r\n", pFunctionName, pErrorDescription);
 }
 
-
-
 struct ProcInfo
 {
     unsigned int pid;
@@ -183,14 +181,21 @@ int NvidiaInfo::setup()
 
 int NvidiaInfo::update()
 {
-    // NOTE: nvUtil.memory is the memory controller utilization not the frame buffer utilization
+    nvmlReturn_t nvRetValue = NVML_SUCCESS;
     nvmlUtilization_t nvUtilData;
-    nvmlReturn_t nvRetValue = _nvmlDeviceGetUtilizationRates(handle, &nvUtilData);
-    if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
+
+    // SM and MEM
     {
-        bGPUUtilSupported = false;
+        // NOTE: nvUtil.memory is the memory controller utilization not the frame buffer utilization
+        nvRetValue = _nvmlDeviceGetUtilizationRates(handle, &nvUtilData);
+        if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
+        {
+            bGPUUtilSupported = false;
+        }
+        else CHECK_NVML(nvRetValue, nvmlDeviceGetUtilizationRates);
+        metrics.addMetric(METRIC_SM_SOL, nvUtilData.gpu);
+        metrics.addMetric(METRIC_MEM_SOL, nvUtilData.memory);
     }
-    else CHECK_NVML(nvRetValue, nvmlDeviceGetUtilizationRates);
 
     // Get the GPU frame buffer memory information
     nvmlMemory_t GPUmemoryInfo = {};
@@ -210,15 +215,21 @@ int NvidiaInfo::update()
     uint64_t ulFrameBufferUsedMBytes = (uint64_t)(ulFrameBufferTotalMBytes - (GPUmemoryInfo.free / 1024L / 1024L));
 
     // calculate the frame buffer memory utilization
-    metrics.addMetric(METRIC_SM_SOL, nvUtilData.gpu);
-    metrics.addMetric(METRIC_MEM_SOL, nvUtilData.memory);
+
     metrics.addMetric(METRIC_FB_USAGE, ulFrameBufferUsedMBytes * 100.0f / ulFrameBufferTotalMBytes);
 
     // power and temprature
-    uint32_t temp = 0;
-    nvRetValue = _nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU, &temp);
-    CHECK_NVML(nvRetValue, nvmlDeviceGetTemperature);
-    metrics.addMetric(METRIC_TEMPERATURE, temp);
+    {
+        uint32_t temp = 0;
+        nvRetValue = _nvmlDeviceGetTemperature(handle, NVML_TEMPERATURE_GPU, &temp);
+        CHECK_NVML(nvRetValue, nvmlDeviceGetTemperature);
+        metrics.addMetric(METRIC_GPU_TEMPERATURE, temp);
+
+        uint32_t power = 0;
+        nvRetValue = _nvmlDeviceGetPowerUsage(handle, &power);
+        CHECK_NVML(nvRetValue, nvmlDeviceGetPowerUsage);
+        metrics.addMetric(METRIC_GPU_POWER, power * 0.001f);
+    }
 
     // Get the video encoder utilization (where supported)
     uint32_t uiVidEncoderUtil = 0u;

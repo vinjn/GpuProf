@@ -10,7 +10,8 @@ enum MetricType
     METRIC_SM_SOL,
     METRIC_FB_USAGE,
     METRIC_MEM_SOL,
-    METRIC_TEMPERATURE,
+    METRIC_GPU_TEMPERATURE,
+    METRIC_GPU_POWER,
     METRIC_NVENC_SOL,
     METRIC_NVDEC_SOL,
     METRIC_SM_CLK,
@@ -50,8 +51,12 @@ const uint8_t colors[][3] =
     { 10,122,200 },
 };
 
-extern std::string kMetricNames[METRIC_COUNT];
-extern bool kMetricAbsolute[METRIC_COUNT];
+struct MetaType
+{
+    std::string name;
+    std::string suffix;
+};
+extern MetaType kMetricMetas[METRIC_COUNT];
 
 struct MetricsInfo
 {
@@ -64,6 +69,6 @@ struct MetricsInfo
     void addMetric(MetricType type, float value);
     void resetMetric(MetricType type);
 
-    void draw(std::shared_ptr<cimg_library::CImgDisplay> window, cimg_library::CImg<unsigned char>& img, int beginMetricId, int endMetricId, bool absoluteValue = false);
-    void drawImgui(const char* panelName, int beginMetricId, int endMetricId, bool absoluteValue = false);
+    void draw(std::shared_ptr<cimg_library::CImgDisplay> window, cimg_library::CImg<unsigned char>& img, int beginMetricId, int endMetricId);
+    void drawImgui(const char* panelName, int beginMetricId, int endMetricId);
 };
