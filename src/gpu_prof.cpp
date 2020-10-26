@@ -41,6 +41,9 @@
 #include "metrics_info.h"
 #include "gui_imgui.h"
 
+// TODO: cross-platform
+#include "../build/resource.h"
+
 #include "screen_shot.h"
 
 using namespace std;
@@ -60,6 +63,13 @@ int setup()
     system_setup();
     etw_setup();
     nvidia_setup();
+
+    for (auto& window : windows)
+    {
+        HICON hIcon = LoadIcon(GetModuleHandle("gpuprof.exe"), MAKEINTRESOURCE(IDI_ICON1));
+        SendMessage(window->_window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+        SendMessage(window->_window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+    }
 
     return 0;
 }

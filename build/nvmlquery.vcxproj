@@ -140,10 +140,10 @@
     <ClInclude Include="..\src\intel_prof.h" />
     <ClInclude Include="..\src\metrics_info.h" />
     <ClInclude Include="..\src\nvidia_prof.h" />
+    <ClInclude Include="..\src\resource.h" />
     <ClInclude Include="..\src\screen_shot.h" />
     <ClInclude Include="..\src\system_prof.h" />
     <ClInclude Include="..\src\util_win32.h" />
-    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\3rdparty\imgui\imgui.cpp" />
