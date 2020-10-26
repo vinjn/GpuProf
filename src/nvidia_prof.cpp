@@ -229,6 +229,13 @@ int NvidiaInfo::update()
         nvRetValue = _nvmlDeviceGetPowerUsage(handle, &power);
         CHECK_NVML(nvRetValue, nvmlDeviceGetPowerUsage);
         metrics.addMetric(METRIC_GPU_POWER, power * 0.001f);
+
+#if 1
+        // BUG? fanSpeed is always 0
+        uint32_t fanSpeed = 0;
+        nvRetValue = _nvmlDeviceGetFanSpeed(handle, &fanSpeed);
+        CHECK_NVML(nvRetValue, nvmlDeviceGetFanSpeed);
+#endif
     }
 
     // Get the video encoder utilization (where supported)
