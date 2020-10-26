@@ -143,6 +143,7 @@
     <ClInclude Include="..\src\screen_shot.h" />
     <ClInclude Include="..\src\system_prof.h" />
     <ClInclude Include="..\src\util_win32.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\3rdparty\imgui\imgui.cpp" />
@@ -199,6 +200,12 @@
     <ClCompile Include="..\src\screen_shot.cpp" />
     <ClCompile Include="..\src\system_prof.cpp" />
     <ClCompile Include="..\src\util_win32.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="gpuprof.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

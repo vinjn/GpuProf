@@ -175,6 +175,7 @@
     <ClInclude Include="..\src\gui_imgui.h">
       <Filter>shared</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\md_calculation.cpp">
@@ -321,5 +322,14 @@
     <Filter Include="imgui_remote">
       <UniqueIdentifier>{1f62119d-b0b9-4661-9626-3e8dbd9de74a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{8c3838d1-94a5-42eb-bcad-f93018124603}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="gpuprof.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
   </ItemGroup>
 </Project>

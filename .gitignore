@@ -36,7 +36,9 @@ build/x64
 *.opendb
 *.db
 *.suo
-/bin/*.exe
+bin/*.exe
 build/.vs
 *.7z
 *.pdb
+*.user
+*.aps
