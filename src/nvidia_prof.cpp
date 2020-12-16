@@ -426,6 +426,7 @@ int nvidia_setup()
         return -1;
 
     // Before any of the NVML functions can be used nvmlInit() must be called
+    nvRetValue = _nvmlInitWithFlags(0);
     nvRetValue = _nvmlInit_v2();
 
     if (NVML_SUCCESS != nvRetValue)
