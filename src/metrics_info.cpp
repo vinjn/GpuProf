@@ -110,7 +110,7 @@ void MetricsInfo::drawImgui(const char* panelName, int beginMetricId, int endMet
 {
     for (int k = beginMetricId; k <= endMetricId; k++)
     {
-        char label[32];
+        char label[128];
         sprintf(label, "%s - %s", panelName, kMetricMetas[k].name.c_str());
         char overlay[32];
         sprintf(overlay, "avg %.1f%s", metrics_avg[k], kMetricMetas[k].suffix.c_str());
