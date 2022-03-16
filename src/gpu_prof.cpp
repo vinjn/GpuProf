@@ -174,10 +174,17 @@ int main(int argc, char* argv[])
     if (argc >= 2)
     {
         char* addr = argv[1];
-        isRemoteGuiEnabled = true;
-        isCanvasVisible = false;
+        if (strcmp(addr, "-zen") == 0)
+        {
+            isCanvasVisible = false;
+        }
+        else
+        {
+            isRemoteGuiEnabled = true;
+            isCanvasVisible = false;
 
-        createRemoteImgui(addr);
+            createRemoteImgui(addr);
+        }
     }
 
     //gdiscreen();
