@@ -131,6 +131,8 @@ void DequeueAnalyzedInfo(
     std::vector<std::shared_ptr<PresentEvent>>* presentEvents,
     std::vector<std::shared_ptr<LateStageReprojectionEvent>>* lsrEvents)
 {
+    if (gPMConsumer == nullptr) return;
+
     gPMConsumer->DequeueProcessEvents(*processEvents);
     gPMConsumer->DequeuePresentEvents(*presentEvents);
     (lsrEvents);
@@ -726,6 +728,7 @@ int etw_setup()
                 "       start a new session.\n",
                 mSessionName);
             delete gPMConsumer;
+            gPMConsumer = nullptr;
             return false;
         }
 
