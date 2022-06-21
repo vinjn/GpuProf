@@ -124,6 +124,7 @@
 /// ETHERNET ///
 #define df_PDH_ETHERNETRECV_BYTES "\\Network Interface(*)\\Bytes Received/sec" // 이더넷 수신량(Bytes/sec)
 #define df_PDH_ETHERNETSEND_BYTES "\\Network Interface(*)\\Bytes Sent/sec" // 이더넷 송신량(Bytes/sec)
+#define df_PDH_ETHERNET_BANDWIDTH "\\Network Interface(*)\\Current Bandwidth" // 이더넷 송신량(Bytes/sec)
 
 
 #define df_MAX_RAW 20

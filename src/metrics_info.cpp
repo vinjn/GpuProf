@@ -25,6 +25,8 @@ MetaType kMetricMetas[METRIC_COUNT] =
     {"RAM", "%"},
     {"DISK R", "%"},
     {"DISK W", "%"},
+    {"NET R", "%"},
+    {"NET W", "%"},
 
     {"", ""},
     {"", ""},
@@ -64,7 +66,7 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
     for (int k = beginMetricId; k <= endMetricId; k++)
     {
         CImg<float> plot(metrics[k], MetricsInfo::HISTORY_COUNT, 1);
-        img.draw_graph(plot, colors[k % COLOR_COUNT], alpha, plotType, vertexType, 102, 0);
+        img.draw_graph(plot, colors[(k - beginMetricId) % COLOR_COUNT], alpha, plotType, vertexType, 102, 0);
     }
 
     // avg summary
@@ -72,7 +74,7 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
     {
         img.draw_text(FONT_HEIGHT, FONT_HEIGHT * (k - beginMetricId + 1),
             "%s: %.1f%s\n",
-            colors[k % COLOR_COUNT], 0, 1, FONT_HEIGHT,
+			colors[(k - beginMetricId) % COLOR_COUNT], 0, 1, FONT_HEIGHT,
             kMetricMetas[k].name.c_str(),
             metrics_avg[k],
             kMetricMetas[k].suffix.c_str());
@@ -86,7 +88,7 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
         {
             img.draw_text(window->window_width() - 100, FONT_HEIGHT * (k - beginMetricId + 1),
                 "|%.1f%s\n",
-                colors[k % COLOR_COUNT], 0, 1, FONT_HEIGHT,
+                colors[(k - beginMetricId) % COLOR_COUNT], 0, 1, FONT_HEIGHT,
                 metrics[k][value_idx],
                 kMetricMetas[k].suffix.c_str()
             );
