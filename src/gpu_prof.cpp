@@ -121,6 +121,13 @@ void draw()
             global_mouse_y = ym;
         }
     }
+
+    if (global_mouse_x < 0 || global_mouse_y < 0)
+    {
+        global_mouse_x = windows[0]->width() - 1;
+        global_mouse_y = 0;
+    }
+
     int idx = 0;
     int x0 = windows[0]->window_x();
     int y0 = windows[0]->window_y();

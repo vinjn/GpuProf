@@ -86,7 +86,7 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
         auto value_idx = global_mouse_x / 2;
         for (int k = beginMetricId; k <= endMetricId; k++)
         {
-            img.draw_text(window->window_width() - 100, FONT_HEIGHT * (k - beginMetricId + 1),
+            img.draw_text(window->window_width() - 60, FONT_HEIGHT * (k - beginMetricId + 1),
                 "|%.1f%s\n",
                 colors[(k - beginMetricId) % COLOR_COUNT], 0, 1, FONT_HEIGHT,
                 metrics[k][value_idx],
