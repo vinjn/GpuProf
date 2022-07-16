@@ -131,9 +131,14 @@ void draw()
     int idx = 0;
     int x0 = windows[0]->window_x();
     int y0 = windows[0]->window_y();
+
+    bool force_show_window = false;
+
     for (auto& window : windows)
     {
         if (window->is_keyESC()) running = false;
+        if (window->is_keySPACE()) force_show_window = true;
+
         window->move(x0, y0 + idx * (WINDOW_H + 32));
 
         if (idx == 0)
@@ -150,6 +155,12 @@ void draw()
         }
 
         idx++;
+    }
+
+    for (auto& window : windows)
+    {
+        if (force_show_window)
+            window->show();
     }
 }
 

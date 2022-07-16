@@ -73,7 +73,7 @@ int system_update()
 
     if (!pdh.GetCounterValue(nIdx_NetRead, &netRead)) netRead = 0;
     if (!pdh.GetCounterValue(nIdx_NetWrite, &netWrite)) netWrite = 0;
-    if (!pdh.GetCounterValue(nIdx_NetBandwidth, &netBandwidth)) netBandwidth = 0.1f;
+    if (!pdh.GetCounterValue(nIdx_NetBandwidth, &netBandwidth)) netBandwidth = 0.0f;
 
 #if 0
     double dMin = 0, dMax = 0, dMean = 0;
@@ -85,8 +85,8 @@ int system_update()
     metrics.addMetric(METRIC_DISK_READ_SOL, diskRead);
     metrics.addMetric(METRIC_DISK_WRITE_SOL, diskWrite);
 
-    metrics.addMetric(METRIC_NET_READ_SOL, netRead * 800 / netBandwidth);
-    metrics.addMetric(METRIC_NET_WRITE_SOL, netWrite * 800 / netBandwidth);
+	metrics.addMetric(METRIC_NET_READ_SOL, netRead * 800 / (netBandwidth + 0.1f));
+	metrics.addMetric(METRIC_NET_WRITE_SOL, netWrite * 800 / (netBandwidth + 0.1f));
 
     return 0;
 }
