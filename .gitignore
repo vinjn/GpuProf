@@ -42,3 +42,5 @@ build/.vs
 *.pdb
 *.user
 *.aps
+
+*.etl

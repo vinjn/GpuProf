@@ -1,5 +1,7 @@
+%~d0
+cd %~dp0
 @del %LocalAppData%\UIForETWuser.etl
 @del %LocalAppData%\UIForETWkernel.etl
-call begin.bat
+call %~dp0begin.bat
 timeout /t 1
-call end.bat
+call %~dp0end.bat
