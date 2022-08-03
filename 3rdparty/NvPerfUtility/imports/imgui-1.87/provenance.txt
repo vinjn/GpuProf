@@ -1,0 +1,2 @@
+Taken from https://github.com/ocornut/imgui/releases/tag/v1.87 .
+Subfolders docs, examples, misc have been deleted.
