@@ -178,6 +178,174 @@
     <ClInclude Include="..\src\resource.h">
       <Filter>Resource</Filter>
     </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_common.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_d3d11_host.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_d3d11_target.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_d3d12_host.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_d3d12_target.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_device_host.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_device_target.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_host.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_opengl_host.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_opengl_target.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_target.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_versions_target.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_vulkan_host.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_vulkan_target.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerf\include\windows-desktop-x64\nvperf_host_impl.h">
+      <Filter>NvPerf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCommonHtmlTemplates.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCounterConfiguration.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCounterData.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCpuMarkerTrace.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfD3D.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfD3D11.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfD3D12.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfDeviceProperties.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudConfigurationsGA10X.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudConfigurationsHAL.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudConfigurationsTU10X.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudConfigurationsTU11X.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudDataModel.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudImPlotRenderer.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfInit.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfMetricsConfigBuilder.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfMetricsEvaluator.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfMiniTraceD3D12.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfMiniTraceVulkan.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfOpenGL.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfPeriodicSamplerCommon.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfPeriodicSamplerD3D12.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfPeriodicSamplerGpu.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfPeriodicSamplerVulkan.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfRangeProfiler.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfRangeProfilerD3D11.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfRangeProfilerD3D12.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfRangeProfilerOpenGL.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfRangeProfilerVulkan.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportDefinition.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportDefinitionGA10X.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportDefinitionHAL.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportDefinitionTU10X.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportDefinitionTU11X.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportGenerator.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportGeneratorD3D11.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportGeneratorD3D12.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportGeneratorOpenGL.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportGeneratorVulkan.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfScopeExitGuard.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfVulkan.h">
+      <Filter>NvPerfUtility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\md_calculation.cpp">
@@ -326,6 +494,12 @@
     </Filter>
     <Filter Include="Resource">
       <UniqueIdentifier>{8c3838d1-94a5-42eb-bcad-f93018124603}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NvPerf">
+      <UniqueIdentifier>{9493c3c6-49c8-4745-9f5e-90155d1235de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NvPerfUtility">
+      <UniqueIdentifier>{b4ceb794-36d5-4301-8587-9fbdca14c05d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -58,7 +58,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>../3rdparty/MetricsDiscoveryHelper/metrics-discovery/inc/common/instrumentation/api;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/metrics_discovery/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/linux/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdparty/NvPerf/include;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/inc/common/instrumentation/api;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/metrics_discovery/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/linux/inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -75,7 +75,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>../3rdparty/MetricsDiscoveryHelper/metrics-discovery/inc/common/instrumentation/api;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/metrics_discovery/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/linux/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdparty/NvPerf/include;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/inc/common/instrumentation/api;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/metrics_discovery/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/linux/inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -119,6 +119,62 @@
     <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\linux\inc\iu_os.h" />
     <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\source\metrics_discovery_helper.h" />
     <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\source\metrics_discovery_helper_dx11.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCommonHtmlTemplates.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCounterConfiguration.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCounterData.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCpuMarkerTrace.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfD3D.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfD3D11.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfD3D12.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfDeviceProperties.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudConfigurationsGA10X.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudConfigurationsHAL.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudConfigurationsTU10X.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudConfigurationsTU11X.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudDataModel.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfHudImPlotRenderer.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfInit.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfMetricsConfigBuilder.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfMetricsEvaluator.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfMiniTraceD3D12.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfMiniTraceVulkan.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfOpenGL.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfPeriodicSamplerCommon.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfPeriodicSamplerD3D12.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfPeriodicSamplerGpu.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfPeriodicSamplerVulkan.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfRangeProfiler.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfRangeProfilerD3D11.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfRangeProfilerD3D12.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfRangeProfilerOpenGL.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfRangeProfilerVulkan.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportDefinition.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportDefinitionGA10X.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportDefinitionHAL.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportDefinitionTU10X.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportDefinitionTU11X.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportGenerator.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportGeneratorD3D11.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportGeneratorD3D12.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportGeneratorOpenGL.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfReportGeneratorVulkan.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfScopeExitGuard.h" />
+    <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfVulkan.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_common.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_d3d11_host.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_d3d11_target.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_d3d12_host.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_d3d12_target.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_device_host.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_device_target.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_host.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_opengl_host.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_opengl_target.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_target.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_versions_target.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_vulkan_host.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\nvperf_vulkan_target.h" />
+    <ClInclude Include="..\3rdparty\NvPerf\include\windows-desktop-x64\nvperf_host_impl.h" />
     <ClInclude Include="..\3rdparty\PDH\CPdh.h" />
     <ClInclude Include="..\3rdparty\PresentMon\PresentData\Debug.hpp" />
     <ClInclude Include="..\3rdparty\PresentMon\PresentData\ETW\Microsoft_Windows_D3D9.h" />

@@ -24,7 +24,7 @@
  */
 
 #define _HAS_STD_BYTE 0
-#define GPU_PROF_VERSION "1.1"
+#define GPU_PROF_VERSION "1.2"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -45,6 +45,8 @@
 #include "../build/resource.h"
 
 #include "screen_shot.h"
+
+#include "shlwapi.h"
 
 using namespace std;
 
@@ -105,6 +107,7 @@ int cleanup()
 
 int global_mouse_x = -1;
 int global_mouse_y = -1;
+char exe_folder[MAX_PATH + 1] = "";
 
 void draw()
 {
@@ -133,11 +136,13 @@ void draw()
     int y0 = windows[0]->window_y();
 
     bool force_show_window = false;
+    bool capture_etl = false;
 
     for (auto& window : windows)
     {
         if (window->is_keyESC()) running = false;
         if (window->is_keySPACE()) force_show_window = true;
+        if (window->is_keyF8()) capture_etl = true;
 
         window->move(x0, y0 + idx * (WINDOW_H + 32));
 
@@ -161,6 +166,13 @@ void draw()
     {
         if (force_show_window)
             window->show();
+    }
+
+    if (capture_etl)
+    {
+        char buf[256];
+        sprintf(buf, "sudo.exe %s\\etw\\capture.bat", exe_folder);
+        system(buf);
     }
 }
 
@@ -204,6 +216,9 @@ int main(int argc, char* argv[])
             createRemoteImgui(addr);
         }
     }
+
+    GetModuleFileNameA(NULL, exe_folder, MAX_PATH);
+    PathRemoveFileSpecA(exe_folder);
 
     //gdiscreen();
 

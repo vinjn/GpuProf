@@ -14,6 +14,51 @@ using namespace std;
 
 #include "../3rdparty/CUDA_SDK/nvml.h"
 
+//#define NV_PERF_ENABLE_INSTRUMENTATION
+
+#ifdef NV_PERF_ENABLE_INSTRUMENTATION
+#ifdef _WIN32
+// Suppress redifinition warnings
+//#undef APIENTRY
+// undef min and max from windows.h
+#define NOMINMAX
+#endif
+#include "windows-desktop-x64/nvperf_host_impl.h"
+#include "../3rdparty/NvPerfUtility/include/NvPerfReportGenerator.h"
+#include "../3rdparty/NvPerfUtility/include/NvPerfPeriodicSamplerGpu.h"
+#include "../3rdparty/NvPerfUtility/include/NvPerfOpenGL.h"
+
+//nv::perf::profiler::ReportGeneratorOpenGL m_nvperf;
+double m_nvperfWarmupTime = 0.5; // Wait 0.5s to allow the clock to stabalize before begining to profile
+NVPW_Device_ClockStatus m_clockStatus = NVPW_DEVICE_CLOCK_STATUS_UNKNOWN; // Used to restore clock state when exiting
+
+using namespace nv::perf;
+using namespace nv::perf::sampler;
+
+size_t nsightDeviceIndex = -1;
+
+size_t GetCompatibleGpuDeviceIndex()
+{
+    NVPW_GetDeviceCount_Params getDeviceCountParams = { NVPW_GetDeviceCount_Params_STRUCT_SIZE };
+    NVPA_Status nvpaStatus = NVPW_GetDeviceCount(&getDeviceCountParams);
+    if (nvpaStatus)
+    {
+        NV_PERF_LOG_ERR(50, "Failed NVPW_GetDeviceCount: %u\n", nvpaStatus);
+        return size_t(~0);
+    }
+
+    for (size_t deviceIndex = 0; deviceIndex < getDeviceCountParams.numDevices; ++deviceIndex)
+    {
+        if (GpuPeriodicSamplerIsGpuSupported(deviceIndex))
+        {
+            return deviceIndex;
+        }
+    }
+    return size_t(~0);
+}
+
+#endif
+
 // display information about the calling function and related error
 void ShowErrorDetails(const nvmlReturn_t nvRetVal, const char* pFunctionName);
 
@@ -418,8 +463,28 @@ extern vector<shared_ptr<CImgDisplay>> windows;
 extern bool isCanvasVisible;
 uint32_t uiNumGPUs = 0;
 
+
 int nvidia_setup()
 {
+#ifdef NV_PERF_ENABLE_INSTRUMENTATION
+    const bool initializeNvPerfResult = InitializeNvPerf();
+    if (initializeNvPerfResult)
+    {
+        const bool openGLLoadDriverResult = OpenGLLoadDriver(); // device periodic sampler requires at least one driver to be loaded
+        if (initializeNvPerfResult)
+        {
+            nsightDeviceIndex = GetCompatibleGpuDeviceIndex();
+            if (nsightDeviceIndex == size_t(~0))
+            {
+                printf("Current device is unsupported, test is skipped.\n");
+                return 1;
+            }
+
+            const size_t MaxNumUndecodedSamples = 1024;
+            const size_t RecordBufferSize = 256 * 1024 * 1024; // 256 MB
+        }
+    }
+#endif
     nvmlReturn_t nvRetValue = NVML_ERROR_UNINITIALIZED;
 
     if (!LoadNVML())
