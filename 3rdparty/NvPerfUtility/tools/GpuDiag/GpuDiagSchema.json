@@ -1,0 +1,323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GpuDiag",
+  "description": "Gpu And Environment Info Collection Tool",
+  "type": "object",
+  "properties": {
+    "Windows": {
+      "description": "Windows System Info",
+      "type": "object",
+      "properties": {
+        "OS": {
+          "type": [ "string", "null"]
+        },
+        "Processor": {
+          "type": "string"
+        },
+        "ProcessorArchitecture": {
+          "type": "string"
+        },
+        "NumberOfProcessors": {
+          "type": "number",
+          "minimum": 1
+        },
+        "PhysicalMemory": {
+          "type": [ "string", "null"]
+        }
+      },
+      "required": [ "OS", "Processor", "ProcessorArchitecture", "NumberOfProcessors", "PhysicalMemory" ],
+      "additionalProperties": false
+    },
+    "Linux": {
+      "description": "Linux System Info",
+      "type": "object",
+      "properties": {
+        "OS": {
+          "type": "string"
+        },
+        "Processor": {
+          "type": "string"
+        },
+        "NumberOfProcessors": {
+          "type": "string"
+        },
+        "PhysicalMemory": {
+          "type": "string"
+        }
+      },
+      "required": [ "OS", "Processor", "NumberOfProcessors", "PhysicalMemory" ],
+      "additionalProperties": false
+    },
+    "Global": {
+      "description": "Global Info",
+      "type": "object",
+      "properties": {
+        "GraphicsDriverVersion": {
+          "type": "string"
+        },
+        "GPUs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ProfilerDeviceIndex": {
+                "type": "number"
+              },
+              "DeviceName": {
+                "type": "string"
+              },
+              "ChipName": {
+                "type": "string"
+              },
+              "VideoMemorySize": {
+                "type": [ "string", "null"]
+              },
+              "ClockStatus": {
+                "type": [ "string", "null" ]
+              }
+            },
+            "required": [ "ProfilerDeviceIndex", "DeviceName", "ChipName", "VideoMemorySize", "ClockStatus" ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [ "GraphicsDriverVersion", "GPUs" ],
+      "additionalProperties": false
+    },
+    "Vulkan": {
+      "description": "Vulkan Info",
+      "type": "object",
+      "properties": {
+        "AvailableInstanceLayers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Name": {
+                "type": "string"
+              },
+              "Description": {
+                "type": "string"
+              },
+              "SpecVersion": {
+                "type": "number"
+              },
+              "ImplementationVersion": {
+                "type": "number"
+              }
+            },
+            "required": [ "Name", "Description", "SpecVersion", "ImplementationVersion" ],
+            "additionalProperties": false
+          }
+        },
+        "ProfilerRequiredInstanceExtensionsSupported": {
+          "type": [ "object", "null" ]
+        },
+        "ProfilerDriverLoaded": {
+          "type": "boolean"
+        },
+        "Devices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "VKDeviceIndex": {
+                "type": "number"
+              },
+              "Name": {
+                "type": "string"
+              },
+              "Type": {
+                "type": "string"
+              },
+              "VendorId": {
+                "type": "number"
+              },
+              "DeviceId": {
+                "type": "number"
+              },
+              "ApiVersion": {
+                "type": "string"
+              },
+              "DeviceUUID": {
+                "type": "string"
+              },
+              "DeviceLUID": {
+                "type": "string"
+              },
+              "DeviceNodeMask": {
+                "type": [ "number", "null" ]
+              },
+              "IsNvidiaDevice": {
+                "type": "boolean"
+              },
+              "ProfilerIsGpuSupported": {
+                "type": "object",
+                "properties": {
+                  "IsSupported": {
+                    "type": "boolean"
+                  },
+                  "GpuArchitectureSupported": {
+                    "type": [ "boolean", "null"]
+                  },
+                  "SliSupportLevel": {
+                    "type": [ "boolean", "null"]
+                  },
+                  "CmpSupportLevel": {
+                    "type": [ "boolean", "null"]
+                  },
+                  "Advice": {
+                    "type": "string"
+                  }
+                },
+                "required": [ "IsSupported", "GpuArchitectureSupported", "SliSupportLevel", "CmpSupportLevel", "Advice" ],
+                "additionalProperties": false
+              },
+              "ProfilerIsSessionSupported": {
+                "type": "object",
+                "properties": {
+                  "IsSupported": {
+                    "type": "boolean"
+                  },
+                  "Advice": {
+                    "type": "string"
+                  }
+                },
+                "required": [ "IsSupported", "Advice" ],
+                "additionalProperties": false
+              },
+              "ProfilerDeviceIndex": {
+                "type": [ "number", "null" ]
+              },
+              "ProfilerRequiredDeviceExtensionsSupported": {
+                "type": [ "object", "null" ]
+              }
+            },
+            "required": [ "VKDeviceIndex", "Name", "Type", "VendorId", "DeviceId", "ApiVersion", "DeviceUUID", "DeviceLUID", "DeviceNodeMask", "IsNvidiaDevice", "ProfilerIsGpuSupported", "ProfilerIsSessionSupported", "ProfilerDeviceIndex", "ProfilerRequiredDeviceExtensionsSupported" ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [ "AvailableInstanceLayers", "ProfilerRequiredInstanceExtensionsSupported", "ProfilerDriverLoaded", "Devices" ],
+      "additionalProperties": false
+    },
+    "D3D": {
+      "description": "D3D Info",
+      "type": "object",
+      "properties": {
+        "ProfilerDriverLoaded": {
+          "type": "boolean"
+        },
+        "Devices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "DXGIAdapterIndex": {
+                "type": "number"
+              },
+              "Name": {
+                "type": "string"
+              },
+              "VendorId": {
+                "type": "number"
+              },
+              "DeviceId": {
+                "type": "number"
+              },
+              "DedicatedVideoMemory": {
+                "type": "string"
+              },
+              "DedicatedSystemMemory": {
+                "type": "string"
+              },
+              "SharedSystemMemory": {
+                "type": "string"
+              },
+              "DeviceLUID": {
+                "type": "string"
+              },
+              "IsDebugLayerForcedOn": {
+                "type": "boolean"
+              },
+              "IsNvidiaDevice": {
+                "type": "boolean"
+              },
+              "ProfilerIsGpuSupported": {
+                "type": "object",
+                "properties": {
+                  "IsSupported": {
+                    "type": "boolean"
+                  },
+                  "GpuArchitectureSupported": {
+                    "type": [ "boolean", "null"]
+                  },
+                  "SliSupportLevel": {
+                    "type": [ "boolean", "null"]
+                  },
+                  "Advice": {
+                    "type": "string"
+                  }
+                },
+                "required": [ "IsSupported", "GpuArchitectureSupported", "SliSupportLevel", "Advice" ],
+                "additionalProperties": false
+              },
+              "ProfilerIsSessionSupported": {
+                "type": "object",
+                "properties": {
+                  "IsSupported": {
+                    "type": "boolean"
+                  },
+                  "Advice": {
+                    "type": "string"
+                  }
+                },
+                "required": [ "IsSupported", "Advice" ],
+                "additionalProperties": false
+              },
+              "ProfilerDeviceIndex": {
+                "type": [ "number", "null" ]
+              },
+              "Displays": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "OutputIndex": {
+                      "type": "number"
+                    },
+                    "Description": {
+                      "type": "string"
+                    },
+                    "Left": {
+                      "type": "number"
+                    },
+                    "Top": {
+                      "type": "number"
+                    },
+                    "Width": {
+                      "type": "number"
+                    },
+                    "Height": {
+                      "type": "number"
+                    },
+                    "AttachedToDesktop": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [ "OutputIndex", "Description", "Left", "Top", "Width", "Height", "AttachedToDesktop" ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [ "DXGIAdapterIndex", "Name", "VendorId", "DeviceId", "DedicatedVideoMemory", "DedicatedSystemMemory", "SharedSystemMemory", "DeviceLUID", "IsDebugLayerForcedOn", "IsNvidiaDevice", "ProfilerIsGpuSupported", "ProfilerIsSessionSupported", "ProfilerDeviceIndex", "Displays" ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [ "ProfilerDriverLoaded", "Devices" ],
+      "additionalProperties": false
+    }
+  },
+  "required": [ "Global", "Vulkan" ]
+}
