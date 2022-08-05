@@ -9,6 +9,8 @@
 @set DX_Flags=Microsoft-Windows-DxgKrnl:0xFFFF:5+Microsoft-Windows-MediaEngine
 @set UserProviders=%DX_Flags%+Microsoft-Windows-Win32k:0xfdffffffefffffff+Multi-MAIN+Multi-FrameRate+Multi-Input+Multi-Worker+Microsoft-Windows-Kernel-Memory:0xE0+Microsoft-Windows-Kernel-Process
 
+xperf.exe -h
+
 xperf.exe ^
  -start "NT Kernel Logger" -on %KernelProviders% ^
  -stackwalk Profile+CSwitch+ReadyThread -buffersize 1024 -minbuffers 1200 -maxbuffers 1200 ^
