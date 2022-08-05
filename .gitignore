@@ -46,3 +46,5 @@ build/.vs
 *.etl
 bin/etw/GpuProf-*
 bin/etw/*.txt
+GpuProf-*
+bin/
