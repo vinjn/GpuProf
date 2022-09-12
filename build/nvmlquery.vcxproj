@@ -58,11 +58,12 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>../3rdparty/NvPerf/include;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/inc/common/instrumentation/api;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/metrics_discovery/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/linux/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdparty;../3rdparty/SDL/include;../3rdparty/imgui;../3rdparty/NvPerf/include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>../3rdparty/SDL/lib/</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -75,22 +76,24 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>../3rdparty/NvPerf/include;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/inc/common/instrumentation/api;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/metrics_discovery/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/common/inc;../3rdparty/MetricsDiscoveryHelper/metrics-discovery/instrumentation/utils/linux/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../3rdparty;../3rdparty/SDL/include;../3rdparty/imgui;../3rdparty/NvPerf/include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>../3rdparty/SDL/lib/</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\3rdparty\CImg.h" />
     <ClInclude Include="..\3rdparty\CUDA_SDK\nvml.h" />
+    <ClInclude Include="..\3rdparty\imgui\backends\imgui_impl_sdl.h" />
+    <ClInclude Include="..\3rdparty\imgui\backends\imgui_impl_sdlrenderer.h" />
     <ClInclude Include="..\3rdparty\imgui\imconfig.h" />
     <ClInclude Include="..\3rdparty\imgui\imgui.h" />
     <ClInclude Include="..\3rdparty\imgui\imgui_internal.h" />
-    <ClInclude Include="..\3rdparty\imgui\imgui_stdlib.h" />
     <ClInclude Include="..\3rdparty\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\3rdparty\imgui\imstb_textedit.h" />
     <ClInclude Include="..\3rdparty\imgui\imstb_truetype.h" />
@@ -104,21 +107,8 @@
     <ClInclude Include="..\3rdparty\imgui_remote\webby\webby.h" />
     <ClInclude Include="..\3rdparty\imgui_remote\webby\webby_unix.h" />
     <ClInclude Include="..\3rdparty\imgui_remote\webby\webby_win32.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\inc\common\instrumentation\api\instr_gt_driver_ifc.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\inc\common\instrumentation\api\metrics_discovery_api.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\inc\common\instrumentation\api\metrics_discovery_internal_api.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_calculation.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_driver_ifc.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_exports.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_internal.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_per_platform_preamble.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\inc\md_types.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\common\inc\iu_debug.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\common\inc\iu_std.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\linux\inc\iu_i915_perf.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\linux\inc\iu_os.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\source\metrics_discovery_helper.h" />
-    <ClInclude Include="..\3rdparty\MetricsDiscoveryHelper\source\metrics_discovery_helper_dx11.h" />
+    <ClInclude Include="..\3rdparty\implot\implot.h" />
+    <ClInclude Include="..\3rdparty\implot\implot_internal.h" />
     <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCommonHtmlTemplates.h" />
     <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCounterConfiguration.h" />
     <ClInclude Include="..\3rdparty\NvPerfUtility\include\NvPerfCounterData.h" />
@@ -202,26 +192,21 @@
     <ClInclude Include="..\src\util_win32.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\3rdparty\imgui\backends\imgui_impl_sdl.cpp" />
+    <ClCompile Include="..\3rdparty\imgui\backends\imgui_impl_sdlrenderer.cpp" />
     <ClCompile Include="..\3rdparty\imgui\imgui.cpp" />
     <ClCompile Include="..\3rdparty\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\3rdparty\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\3rdparty\imgui\imgui_stdlib.cpp" />
+    <ClCompile Include="..\3rdparty\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\3rdparty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\3rdparty\imgui_remote\lz4\lz4.c" />
     <ClCompile Include="..\3rdparty\imgui_remote\lz4\lz4frame.c" />
     <ClCompile Include="..\3rdparty\imgui_remote\lz4\lz4hc.c" />
     <ClCompile Include="..\3rdparty\imgui_remote\lz4\xxhash.c" />
     <ClCompile Include="..\3rdparty\imgui_remote\webby\webby.c" />
-    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\metrics_discovery\common\md_calculation.cpp" />
-    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\common\iu_debug.c" />
-    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\win\iu_os.cpp" />
-    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\metrics-discovery\instrumentation\utils\win\iu_std.cpp" />
-    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\context.cpp" />
-    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\equations.cpp" />
-    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\periodic_metrics.cpp" />
-    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\range_metrics_dx11.cpp" />
-    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\report_memory.cpp" />
-    <ClCompile Include="..\3rdparty\MetricsDiscoveryHelper\source\values.cpp" />
+    <ClCompile Include="..\3rdparty\implot\implot.cpp" />
+    <ClCompile Include="..\3rdparty\implot\implot_demo.cpp" />
+    <ClCompile Include="..\3rdparty\implot\implot_items.cpp" />
     <ClCompile Include="..\3rdparty\PDH\CPdh.cpp" />
     <ClCompile Include="..\3rdparty\PresentMon\PresentData\Debug.cpp" />
     <ClCompile Include="..\3rdparty\PresentMon\PresentData\MixedRealityTraceConsumer.cpp" />

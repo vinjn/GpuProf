@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../3rdparty/imgui/imgui.h"
+#include "imgui/imgui.h"
+#include "implot/implot.h"
 /*
 item.def
     ITEM_DEF(string, REMOTE_GUI_IP, "127.0.0.1")
@@ -24,8 +25,13 @@ setup():
     });
 */
 
-void createRemoteImgui(const char* address = "127.0.0.1", int port = 7003);
+bool createRemoteImgui(const char* address = "127.0.0.1", int port = 7003);
 void updateRemoteImgui();
-
 void ImGui_ImplCinder_NewFrameGuard();
 void ImGui_ImplCinder_PostDraw();
+
+bool createImgui();
+void updateImgui();
+void ImGui_SDL_BeginDraw();
+void ImGui_SDL_EndDraw();
+void destroyImgui();

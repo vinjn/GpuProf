@@ -685,7 +685,7 @@ void StopOutputThread()
 
 // TODO: move to header file
 extern vector<shared_ptr<CImgDisplay>> windows;
-extern bool isCanvasVisible;
+extern bool isCimgVisible;
 
 int etw_setup()
 {
@@ -696,7 +696,7 @@ int etw_setup()
     recordingToggleHistory.reserve(16);
     terminatedProcesses.reserve(16);
 
-    if (isCanvasVisible)
+    if (isCimgVisible)
     {
         window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, "FPS", 3);
         windows.push_back(window);

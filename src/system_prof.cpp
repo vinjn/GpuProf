@@ -7,7 +7,7 @@ using namespace std;
 
 // TODO
 extern vector<shared_ptr<CImgDisplay>> windows;
-extern bool isCanvasVisible;
+extern bool isCimgVisible;
 
 namespace
 {
@@ -50,7 +50,7 @@ int system_setup()
     pdh.AddCounter(df_PDH_ETHERNET_BANDWIDTH, nIdx_NetBandwidth);
 
 
-    if (isCanvasVisible)
+    if (isCimgVisible)
     {
         window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, "System", 3);
         window->move(400, 100);

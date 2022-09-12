@@ -460,7 +460,7 @@ void NvidiaInfo::draw()
 // TODO
 static vector<NvidiaInfo> NvidiaInfos;
 extern vector<shared_ptr<CImgDisplay>> windows;
-extern bool isCanvasVisible;
+extern bool isCimgVisible;
 uint32_t uiNumGPUs = 0;
 
 
@@ -536,7 +536,7 @@ int nvidia_setup()
         auto& info = NvidiaInfos[iDevIDX];
         info.deviceId = iDevIDX;
         info.setup();
-        if (isCanvasVisible)
+        if (isCimgVisible)
         {
             info.window = make_shared<CImgDisplay>(WINDOW_W, WINDOW_H, info.cDevicename, 3);
             windows.push_back(info.window);

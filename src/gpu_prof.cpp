@@ -34,8 +34,6 @@
 #include <string>
 
 #include "nvidia_prof.h"
-#include "intel_prof.h"
-#include "amd_prof.h"
 #include "etw_prof.h"
 #include "system_prof.h"
 #include "metrics_info.h"
@@ -53,7 +51,8 @@ using namespace std;
 #include "../3rdparty/CImg.h"
 using namespace cimg_library;
 
-bool isCanvasVisible = true;
+bool isCimgVisible = false;
+bool isImguiEnabled = false;
 bool isRemoteGuiEnabled = false;
 
 vector<shared_ptr<CImgDisplay>> windows;
@@ -88,8 +87,8 @@ int update()
     if (state & 1)
     {
         // LSB of state indicates it's a "CLICK"
-        isCanvasVisible = !isCanvasVisible;
-        if (isCanvasVisible) window->show();
+        isCimgVisible = !isCimgVisible;
+        if (isCimgVisible) window->show();
         else window->close();
     }
 #endif
@@ -102,6 +101,9 @@ int cleanup()
     etw_cleanup();
     nvidia_cleanup();
 
+    if (isImguiEnabled)
+        destroyImgui();
+
     return 0;
 }
 
@@ -109,7 +111,7 @@ int global_mouse_x = -1;
 int global_mouse_y = -1;
 char exe_folder[MAX_PATH + 1] = "";
 
-void draw()
+void drawCimg()
 {
     global_mouse_x = -1;
     global_mouse_y = -1;
@@ -176,13 +178,28 @@ void draw()
     }
 }
 
-void drawImgui()
+void drawImgui(bool isRemote)
 {
-    updateRemoteImgui();
-    ImGui_ImplCinder_NewFrameGuard();
+    if (isRemote)
+    {
+        updateRemoteImgui();
+        ImGui_ImplCinder_NewFrameGuard();
+    }
+    else
+    {
+        updateImgui();
+        ImGui_SDL_BeginDraw();
+    }
 
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(1024, 768));
+#ifndef NDEBUG
+    static bool showImguiDemoWindow = false;
+    ImGui::ShowDemoWindow(&showImguiDemoWindow);
+    static bool showImplotDemoWindow = false;
+    ImPlot::ShowDemoWindow(&showImplotDemoWindow);
+#endif
+
+    //ImGui::SetNextWindowPos(ImVec2(0, 0));
+    //ImGui::SetNextWindowSize(ImVec2(1024, 768));
     ImGui::Begin("GpuProf " GPU_PROF_VERSION " from vinjn.con");
 
     system_draw_imgui();
@@ -191,7 +208,14 @@ void drawImgui()
 
     ImGui::End();
 
-    ImGui_ImplCinder_PostDraw();
+    if (isRemote)
+    {
+        ImGui_ImplCinder_PostDraw();
+    }
+    else
+    {
+        ImGui_SDL_EndDraw();
+    }
 }
 
 // Application entry point
@@ -206,15 +230,27 @@ int main(int argc, char* argv[])
         char* addr = argv[1];
         if (strcmp(addr, "-zen") == 0)
         {
-            isCanvasVisible = false;
         }
-        else
+        else if (strcmp(addr, "-remote") == 0)
         {
             isRemoteGuiEnabled = true;
-            isCanvasVisible = false;
 
             createRemoteImgui(addr);
         }
+        if (strcmp(addr, "-imgui") == 0)
+        {
+            isImguiEnabled = true;
+
+            createImgui();
+        }
+        else
+        {
+            isCimgVisible = true;
+        }
+    }
+    else
+    {
+        isCimgVisible = true;
     }
 
     GetModuleFileNameA(NULL, exe_folder, MAX_PATH);
@@ -232,15 +268,18 @@ int main(int argc, char* argv[])
         if (update() != 0)
             return -1;
 
-        if (isCanvasVisible)
+        if (isCimgVisible)
         {
-            draw();
+            drawCimg();
         }
         if (isRemoteGuiEnabled)
         {
-            drawImgui();
+            drawImgui(true);
         }
-
+        if (isImguiEnabled)
+        {
+            drawImgui(false);
+        }
         ::Sleep(100);
     }
 
