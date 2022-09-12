@@ -31,7 +31,7 @@ void ImGui_ImplCinder_NewFrameGuard();
 void ImGui_ImplCinder_PostDraw();
 
 bool createImgui();
-void updateImgui();
+bool updateImgui();
 void ImGui_SDL_BeginDraw();
 void ImGui_SDL_EndDraw();
 void destroyImgui();

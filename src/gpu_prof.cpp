@@ -24,7 +24,7 @@
  */
 
 #define _HAS_STD_BYTE 0
-#define GPU_PROF_VERSION "1.2"
+#define GPU_PROF_VERSION "1.3"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -80,6 +80,12 @@ int update()
     system_update();
     etw_update();
     nvidia_update();
+
+    if (isImguiEnabled)
+    {
+        if (!updateImgui())
+            return 1;
+    }
 
     // GUI
 #ifdef WIN32_WITH_THIS
@@ -187,16 +193,17 @@ void drawImgui(bool isRemote)
     }
     else
     {
-        updateImgui();
         ImGui_SDL_BeginDraw();
     }
 
-#ifndef NDEBUG
     static bool showImguiDemoWindow = false;
+    if (ImGui::Button("showImguiDemoWindow"))
+        showImguiDemoWindow = !showImguiDemoWindow;
     ImGui::ShowDemoWindow(&showImguiDemoWindow);
     static bool showImplotDemoWindow = false;
+    if (ImGui::Button("showImplotDemoWindow"))
+        showImplotDemoWindow = !showImplotDemoWindow;
     ImPlot::ShowDemoWindow(&showImplotDemoWindow);
-#endif
 
     //ImGui::SetNextWindowPos(ImVec2(0, 0));
     //ImGui::SetNextWindowSize(ImVec2(1024, 768));
@@ -266,7 +273,7 @@ int main(int argc, char* argv[])
     while (running)
     {
         if (update() != 0)
-            return -1;
+            break;
 
         if (isCimgVisible)
         {
