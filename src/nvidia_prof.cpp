@@ -221,18 +221,35 @@ int NvidiaInfo::setup()
     static char* driverModelsString[] = { "WDDM", "TCC", "N/A" };
     printf("\t%s", driverModelsString[driverModel]);
 
-    _nvmlDeviceGetNumGpuCores(handle, &numCores);
-    printf("\t%u", numCores);
+    if (_nvmlDeviceGetNumGpuCores)
+    {
+        _nvmlDeviceGetNumGpuCores(handle, &numCores);
+        printf("\t%u", numCores);
+    }
+    else printf("\tN/A");
 
-    _nvmlDeviceGetMemoryBusWidth(handle, &busWidth);
-    printf("\t%u", busWidth);
+    if (_nvmlDeviceGetMemoryBusWidth)
+    {
+        _nvmlDeviceGetMemoryBusWidth(handle, &busWidth);
+        printf("\t%u", busWidth);
+    }
+    else printf("\tN/A");
 
-    _nvmlDeviceGetCurrPcieLinkWidth(handle, &pcieLinkWidth);
-    _nvmlDeviceGetCurrPcieLinkGeneration(handle, &pcieLinkGeneration);
-    _nvmlDeviceGetPcieSpeed(handle, &pcieCurrentSpeed);
-    printf("\t%u.0 x%u", pcieLinkGeneration, pcieLinkWidth);
-    printf("\t%.0f", pcieCurrentSpeed / 1e3);
 
+    if (_nvmlDeviceGetCurrPcieLinkWidth && _nvmlDeviceGetCurrPcieLinkGeneration)
+    {
+        _nvmlDeviceGetCurrPcieLinkWidth(handle, &pcieLinkWidth);
+        _nvmlDeviceGetCurrPcieLinkGeneration(handle, &pcieLinkGeneration);
+        printf("\t%u.0 x%u", pcieLinkGeneration, pcieLinkWidth);
+    }
+    else printf("\tN/A");
+
+    if (_nvmlDeviceGetPcieSpeed)
+    {
+        _nvmlDeviceGetPcieSpeed(handle, &pcieCurrentSpeed);
+        printf("\t%.0f", pcieCurrentSpeed / 1e3);
+    }
+    else printf("\tN/A");
 
     // Get the device name
     nvRetValue = _nvmlDeviceGetName(handle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
