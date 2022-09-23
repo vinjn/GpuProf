@@ -144,6 +144,11 @@ struct NvidiaInfo
     uint32_t deviceId = 0;
     nvmlDevice_t handle = NULL;
     nvmlPciInfo_t pciInfo;
+    uint32_t numCores = 0;
+    uint32_t busWidth = 0;
+    uint32_t pcieLinkWidth = 0;
+    uint32_t pcieLinkGeneration = 0;
+    uint32_t pcieCurrentSpeed = 0;
     nvmlDriverModel_t driverModel, pendingDriverModel;
     char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
     uint32_t numLinks;
@@ -168,7 +173,7 @@ struct NvidiaInfo
 
     int updatePerProcessInfo();
 
-    void draw();
+    void draw(bool show_legends);
 
     void drawImgui()
     {
@@ -215,6 +220,19 @@ int NvidiaInfo::setup()
     CHECK_NVML(nvRetValue, nvmlDeviceGetDriverModel);
     static char* driverModelsString[] = { "WDDM", "TCC", "N/A" };
     printf("\t%s", driverModelsString[driverModel]);
+
+    _nvmlDeviceGetNumGpuCores(handle, &numCores);
+    printf("\t%u", numCores);
+
+    _nvmlDeviceGetMemoryBusWidth(handle, &busWidth);
+    printf("\t%u", busWidth);
+
+    _nvmlDeviceGetCurrPcieLinkWidth(handle, &pcieLinkWidth);
+    _nvmlDeviceGetCurrPcieLinkGeneration(handle, &pcieLinkGeneration);
+    _nvmlDeviceGetPcieSpeed(handle, &pcieCurrentSpeed);
+    printf("\t%u.0 x%u", pcieLinkGeneration, pcieLinkWidth);
+    printf("\t%.0f", pcieCurrentSpeed / 1e3);
+
 
     // Get the device name
     nvRetValue = _nvmlDeviceGetName(handle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
@@ -437,22 +455,25 @@ int NvidiaInfo::updatePerProcessInfo()
     return 0;
 }
 
-void NvidiaInfo::draw()
+void NvidiaInfo::draw(bool show_legends)
 {
     CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
     img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
 
-    metrics.draw(window, img, METRIC_SM_SOL, METRIC_NVDEC_SOL);
+    metrics.draw(window, img, METRIC_SM_SOL, METRIC_NVDEC_SOL, show_legends);
 
     // per process info
-    int k = 0;
-    for (const auto& p : ProcInfos)
+    if (show_legends)
     {
-        img.draw_text(140, FONT_HEIGHT * (k + 1),
-            "%s (%d): %d%% | %d%% \n",
-            colors[9], 0, 1, FONT_HEIGHT,
-            p.exeName.c_str(), p.pid, p.gpuStats.gpuUtilization, p.gpuStats.memoryUtilization);
-        k++;
+        int k = 0;
+        for (const auto& p : ProcInfos)
+        {
+            img.draw_text(140, FONT_HEIGHT * (k + 1),
+                "%s (%d): %d%% | %d%% \n",
+                colors[9], 0, 1, FONT_HEIGHT,
+                p.exeName.c_str(), p.pid, p.gpuStats.gpuUtilization, p.gpuStats.memoryUtilization);
+            k++;
+        }
     }
     img.display(*window);
 }
@@ -527,7 +548,7 @@ int nvidia_setup()
 
     bool bNVLinkSupported = false;
 
-    printf("GPU\tMODE\tNAME\n");
+    printf("GPU\tMODE\tCORES\tBUS\tPCIe\tGB/s\tNAME\n");
 
     NvidiaInfos.resize(uiNumGPUs);
 
@@ -570,11 +591,11 @@ int nvidia_update()
     return 0;
 }
 
-int nvidia_draw()
+int nvidia_draw(bool show_legends)
 {
     for (auto& info : NvidiaInfos)
     {
-        info.draw();
+        info.draw(show_legends);
     }
 
     return 0;

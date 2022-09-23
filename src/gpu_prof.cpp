@@ -144,30 +144,37 @@ void drawCimg()
     int y0 = windows[0]->window_y();
 
     bool force_show_window = false;
+    static bool show_legends = true;
     bool capture_etl = false;
+    bool space_hit = false;
 
     for (auto& window : windows)
     {
         if (window->is_keyESC()) running = false;
-        if (window->is_keySPACE()) force_show_window = true;
+        if (window->is_keySPACE()) space_hit = true;
         if (window->is_keyF8()) capture_etl = true;
 
         window->move(x0, y0 + idx * (WINDOW_H + 32));
 
         if (idx == 0)
         {
-            system_draw();
+            system_draw(show_legends);
         }
         else if (idx == 1)
         {
-            etw_draw();
+            etw_draw(show_legends);
         }
         else
         {
-            nvidia_draw();
+            nvidia_draw(show_legends);
         }
 
         idx++;
+    }
+
+    if (space_hit)
+    {
+        show_legends = !show_legends;
     }
 
     for (auto& window : windows)

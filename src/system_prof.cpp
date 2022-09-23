@@ -91,12 +91,12 @@ int system_update()
     return 0;
 }
 
-int system_draw()
+int system_draw(bool show_legends)
 {
     CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
     img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
 
-    metrics.draw(window, img, METRIC_CPU_SOL, METRIC_NET_WRITE_SOL);
+    metrics.draw(window, img, METRIC_CPU_SOL, METRIC_NET_WRITE_SOL, show_legends);
 
     img.display(*window);
     return 0;

@@ -71,6 +71,7 @@ struct MetricsInfo
     void addMetric(MetricType type, float value);
     void resetMetric(MetricType type);
 
-    void draw(std::shared_ptr<cimg_library::CImgDisplay> window, cimg_library::CImg<unsigned char>& img, int beginMetricId, int endMetricId);
+    void draw(std::shared_ptr<cimg_library::CImgDisplay> window, cimg_library::CImg<unsigned char>& img, 
+        int beginMetricId, int endMetricId, bool draw_legends = true);
     void drawImgui(const char* panelName, int beginMetricId, int endMetricId);
 };

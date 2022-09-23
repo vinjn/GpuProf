@@ -781,13 +781,13 @@ int etw_cleanup()
     return 0;
 }
 
-int etw_draw()
+int etw_draw(bool show_legends)
 {
     // Create and display the image of the intensity profile
     CImg<unsigned char> img(window->width(), window->height(), 1, 3, 50);
     img.draw_grid(-50 * 100.0f / window->width(), -50 * 100.0f / 256, 0, 0, false, true, colors[0], 0.2f, 0xCCCCCCCC, 0xCCCCCCCC);
 
-    metrics.draw(window, img, METRIC_FPS_0, displayMetricMax);
+    metrics.draw(window, img, METRIC_FPS_0, displayMetricMax, show_legends);
 
     img.display(*window);
 
