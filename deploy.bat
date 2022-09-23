@@ -11,6 +11,7 @@ robocopy %SRC%/etw %OUTPUT%/etw *.dll
 rem robocopy %SRC%/webui %OUTPUT%/webui *
 rem robocopy %SRC% %OUTPUT% gpuprof-web.bat
 robocopy %SRC%/ %OUTPUT% gpuprof.exe
+robocopy %SRC%/ %OUTPUT% SDL2.dll
 robocopy %SRC%/ %OUTPUT% sudo.exe
 
 tar -caf %OUTPUT%.zip %OUTPUT%
