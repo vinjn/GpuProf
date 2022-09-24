@@ -18,3 +18,7 @@ A single `NVIDIA RTX 2080 Super` running Unreal Editor. Lots of new features has
 # Disable NVLINK
 
  nvidia-smi -g 0 -dm 0
+
+# Python
+
+pip install nvidia-ml-py
