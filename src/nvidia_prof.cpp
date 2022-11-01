@@ -355,6 +355,7 @@ int NvidiaInfo::update()
 
     // pcie traffic
     uint32_t pcieUtils[NVML_PCIE_UTIL_COUNT];
+    uint32_t pcieUtilSum = 0;
     for (int i = 0; i < NVML_PCIE_UTIL_COUNT; i++)
     {
         nvRetValue = _nvmlDeviceGetPcieThroughput(handle, nvmlPcieUtilCounter_t(i), pcieUtils + i);
@@ -363,7 +364,11 @@ int NvidiaInfo::update()
 
         }
         else CHECK_NVML(nvRetValue, nvmlDeviceGetPcieThroughput);
+
+        pcieUtilSum += pcieUtils[i];
     }
+    float sol = pcieUtilSum * 0.1 / pcieCurrentSpeed;
+    metrics.addMetric(METRIC_PCIE_SOL, sol);
 
     // Output the utilization results depending on which of the counters has data available
     // I have opted to display "-" to denote an unsupported value rather than simply display "0"

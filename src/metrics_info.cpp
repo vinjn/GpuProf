@@ -10,14 +10,14 @@ MetaType kMetricMetas[METRIC_COUNT] =
     {"SM", "%"},
     {"RAM", "%"},
     {"MEM", "%"},
+    {"PCIE", "%"},
     {"TEMP", "C"},
     {"POWER", "W"},
     {"ENC", "%"},
     {"DEC", "%"},
+    {"PCIE RX", "%"},
     {"SM CLK", "%"},
     {"MEM CLK", "%"},
-    {"PCIE TX", "%"},
-    {"PCIE RX", "%"},
     {"NVLK TX", "%"},
     {"NVLK RX", "%"},
 
@@ -69,12 +69,13 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
         img.draw_graph(plot, colors[(k - beginMetricId) % COLOR_COUNT], alpha, plotType, vertexType, 102, 0);
     }
 
+    const float kMargin = 0.4;
     // avg summary
     if (show_legends)
     {
         for (int k = beginMetricId; k <= endMetricId; k++)
         {
-            img.draw_text(FONT_HEIGHT * 0.5, FONT_HEIGHT * (k - beginMetricId + 0.5),
+            img.draw_text(FONT_HEIGHT * kMargin, FONT_HEIGHT * (k - beginMetricId + kMargin),
                 "%s: %.1f%s\n",
 			    colors[(k - beginMetricId) % COLOR_COUNT], 0, 1, FONT_HEIGHT,
                 kMetricMetas[k].name.c_str(),
@@ -91,7 +92,7 @@ void MetricsInfo::draw(shared_ptr<CImgDisplay> window, CImg<unsigned char>& img,
         {
             for (int k = beginMetricId; k <= endMetricId; k++)
             {
-                img.draw_text(window->window_width() - 60, FONT_HEIGHT * (k - beginMetricId + 0.5),
+                img.draw_text(window->window_width() - 60, FONT_HEIGHT * (k - beginMetricId + kMargin),
                     "|%.1f%s\n",
                     colors[(k - beginMetricId) % COLOR_COUNT], 0, 1, FONT_HEIGHT,
                     metrics[k][value_idx],
