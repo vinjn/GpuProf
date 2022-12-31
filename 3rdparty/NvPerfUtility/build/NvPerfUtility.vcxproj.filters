@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="..\include\NvPerfCommonHtmlTemplates.h" />
@@ -9,12 +9,15 @@
     <ClInclude Include="..\include\NvPerfD3D11.h" />
     <ClInclude Include="..\include\NvPerfD3D12.h" />
     <ClInclude Include="..\include\NvPerfDeviceProperties.h" />
+    <ClInclude Include="..\include\NvPerfHudConfigurationsAD10X.h" />
     <ClInclude Include="..\include\NvPerfHudConfigurationsGA10X.h" />
     <ClInclude Include="..\include\NvPerfHudConfigurationsHAL.h" />
     <ClInclude Include="..\include\NvPerfHudConfigurationsTU10X.h" />
     <ClInclude Include="..\include\NvPerfHudConfigurationsTU11X.h" />
     <ClInclude Include="..\include\NvPerfHudDataModel.h" />
     <ClInclude Include="..\include\NvPerfHudImPlotRenderer.h" />
+    <ClInclude Include="..\include\NvPerfHudRenderer.h" />
+    <ClInclude Include="..\include\NvPerfHudTextRenderer.h" />
     <ClInclude Include="..\include\NvPerfInit.h" />
     <ClInclude Include="..\include\NvPerfMetricsConfigBuilder.h" />
     <ClInclude Include="..\include\NvPerfMetricsEvaluator.h" />
@@ -31,6 +34,7 @@
     <ClInclude Include="..\include\NvPerfRangeProfilerOpenGL.h" />
     <ClInclude Include="..\include\NvPerfRangeProfilerVulkan.h" />
     <ClInclude Include="..\include\NvPerfReportDefinition.h" />
+    <ClInclude Include="..\include\NvPerfReportDefinitionAD10X.h" />
     <ClInclude Include="..\include\NvPerfReportDefinitionGA10X.h" />
     <ClInclude Include="..\include\NvPerfReportDefinitionHAL.h" />
     <ClInclude Include="..\include\NvPerfReportDefinitionTU10X.h" />

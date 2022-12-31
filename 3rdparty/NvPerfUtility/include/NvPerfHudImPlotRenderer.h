@@ -16,25 +16,16 @@
 
 #pragma once
 
-#include <NvPerfHudDataModel.h> // include before NvPerfInit.h (and thus Windows.h) to avoid std::min/max errors in rapidyaml
-
-#include "NvPerfInit.h"
+#include "NvPerfHudRenderer.h"
 
 #include <imgui.h>
 #include <implot.h>
 
 namespace nv { namespace perf { namespace hud {
 
-class HudImPlotRenderer
+class HudImPlotRenderer : public HudRenderer
 {
 private:
-    // One of these three is set in Initialize()
-    const Panel*            m_pPanel;
-    const HudConfiguration* m_pConfiguration;
-    const HudDataModel*     m_pModel;
-
-    std::map<const ScalarText* , std::vector<const ScalarText*>> m_scalarTextBlocks; // blocks of ScalarTexts for column alignment
-
     const Color m_defaultTextColor = Color::White();
 
 private:
@@ -45,75 +36,7 @@ private:
     }
 
 protected:
-    bool InitializeScalarTextBlocks()
-    {
-        std::vector<const Panel*> panels;
-        std::vector<const HudConfiguration*> configurations;
-
-        if (m_pModel)
-        {
-            for (const HudConfiguration& configuration : m_pModel->GetConfigurations())
-            {
-                configurations.emplace_back(&configuration);
-            }
-        }
-        else if (m_pConfiguration)
-        {
-            configurations.emplace_back(m_pConfiguration);
-        }
-
-        if (configurations.size() != 0)
-        {
-            if (m_pPanel)
-            {
-                NV_PERF_LOG_ERR(20, "Only one of m_panel, m_configuration, m_model can be set\n");
-                return false;
-            }
-            for (const HudConfiguration* pConfiguration : configurations)
-            {
-                for (const Panel& panel : pConfiguration->panels)
-                {
-                    panels.emplace_back(&panel);
-                }
-            }
-        }
-        else
-        {
-            if (!m_pPanel)
-            {
-                NV_PERF_LOG_ERR(20, "Could not find any panels\n");
-                return false;
-            }
-
-            panels.push_back(m_pPanel);
-        }
-
-        for (const Panel* pPanel : panels)
-        {
-            for (size_t index = 0; index < pPanel->widgets.size(); ++index)
-            {
-                if (pPanel->widgets[index]->type == Widget::Type::ScalarText)
-                {
-                    std::vector<const ScalarText*> block;
-
-                    size_t blockSize = 0;
-                    while (index + blockSize < pPanel->widgets.size() && pPanel->widgets[index + blockSize]->type == Widget::Type::ScalarText)
-                    {
-                        block.emplace_back(static_cast<const ScalarText*>(pPanel->widgets[index + blockSize].get()));
-                        ++blockSize;
-                    }
-
-                    m_scalarTextBlocks[static_cast<const ScalarText *>(pPanel->widgets[index].get())] = block;
-
-                    index += blockSize - 1;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    bool RenderPanelBegin(const Panel& panel, bool *showContents)
+    bool RenderPanelBegin(const Panel& panel, bool *showContents) const override
     {
         auto color = panel.label.color.IsValid() ? panel.label.color.Abgr() : m_defaultTextColor.Abgr();
 
@@ -129,20 +52,20 @@ protected:
         return true;
     }
 
-    bool RenderPanelEnd(const Panel&)
+    bool RenderPanelEnd(const Panel&) const override
     {
         // nothing to do here
         return true;
     }
 
-    bool RenderSeparator(const Separator&)
+    bool RenderSeparator(const Separator&) const override
     {
         ImGui::Separator();
         return true;
 
     }
 
-    bool RenderScalarTextBlock(const std::vector<const ScalarText*>& block)
+    bool RenderScalarTextBlock(const std::vector<const ScalarText*>& block) const override
     {
         // cell-spanning/merging is not possible in imgui
         //
@@ -355,7 +278,7 @@ protected:
         return true;
     }
 
-    bool RenderTimePlot(const TimePlot& plot)
+    bool RenderTimePlot(const TimePlot& plot) const override
     {
         float plotHeight = 50.0f + ImGui::GetFont()->FontSize * float(plot.signals.size());
 
@@ -573,110 +496,9 @@ protected:
         return true;
     }
 
-    bool Render(const Panel& panel)
-    {
-        bool success;
-
-        bool showPanelContents = true;
-        success = RenderPanelBegin(panel, &showPanelContents);
-        if (!success)
-        {
-            NV_PERF_LOG_ERR(20, "Error in RenderPanelBegin()\n");
-            return false;
-        }
-
-        if (!showPanelContents)
-        {
-            return true;
-        }
-
-        for (size_t index = 0; index < panel.widgets.size(); ++index)
-        {
-            const Widget* pWidget = panel.widgets[index].get();
-
-            if (pWidget->type == Widget::Type::Panel)
-            {
-                NV_PERF_LOG_WRN(50, "Panels cannot be nested\n");
-            }
-            else if (pWidget->type == Widget::Type::Separator)
-            {
-                success = RenderSeparator(*static_cast<const Separator*>(pWidget));
-                if (!success)
-                {
-                    NV_PERF_LOG_ERR(20, "Error in RenderSeparator()\n");
-                    return false;
-                }
-            }
-            else if (pWidget->type == Widget::Type::ScalarText)
-            {
-                auto it = m_scalarTextBlocks.find(static_cast<const ScalarText*>(pWidget));
-                if (it == m_scalarTextBlocks.end())
-                {
-                    NV_PERF_LOG_ERR(20, "Missing ScalarTextBlock\n");
-                    return false;
-                }
-                const auto& block = it->second;
-                success = RenderScalarTextBlock(block);
-                if (!success)
-                {
-                    NV_PERF_LOG_ERR(20, "Error in RenderScalarTextBlock()\n");
-                    return false;
-                }
-                index += block.size() - 1;
-            }
-            else if (pWidget->type == Widget::Type::TimePlot)
-            {
-                success = RenderTimePlot(*static_cast<const TimePlot*>(pWidget));
-                if (!success)
-                {
-                    NV_PERF_LOG_ERR(20, "Error in RenderTimePlot()\n");
-                    return false;
-                }
-            }
-            else
-            {
-                NV_PERF_LOG_WRN(50, "Cannot render unknown Widget\n");
-            }
-        }
-
-        success = RenderPanelEnd(panel);
-        if (!success)
-        {
-            NV_PERF_LOG_ERR(20, "Error in RenderPanelEnd()\n");
-            return false;
-        }
-
-        return true;
-    }
-
-    bool Render(const HudConfiguration& configuration)
-    {
-        for (const Panel& panel : configuration.panels)
-        {
-            bool success = Render(panel);
-            if (!success)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    bool Render(const HudDataModel& model)
-    {
-        for (const HudConfiguration& configuration : model.GetConfigurations())
-        {
-            bool success = Render(configuration);
-            if (!success)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
 public:
-    HudImPlotRenderer() : m_pPanel(nullptr), m_pConfiguration(nullptr), m_pModel(nullptr), m_scalarTextBlocks() {}
+    HudImPlotRenderer() : HudRenderer(){}
+
     virtual ~HudImPlotRenderer() = default;
 
     static bool SetStyle()
@@ -705,65 +527,6 @@ public:
         plotStyle.Colors[ImPlotCol_LegendBorder].w = 0.3f;
 
         return true;
-    }
-
-    bool Initialize(const Panel& panel)
-    {
-        if (m_pPanel || m_pConfiguration || m_pModel)
-        {
-            NV_PERF_LOG_ERR(20, "Already initialized\n");
-            return false;
-        }
-        m_pPanel = &panel;
-        bool success = InitializeScalarTextBlocks();
-        return success;
-    }
-
-    bool Initialize(const HudConfiguration& configuration)
-    {
-        if (m_pPanel || m_pConfiguration || m_pModel)
-        {
-            NV_PERF_LOG_ERR(20, "Already initialized\n");
-            return false;
-        }
-        m_pConfiguration = &configuration;
-        bool success = InitializeScalarTextBlocks();
-        return success;
-    }
-
-    bool Initialize(const HudDataModel& model)
-    {
-        if (m_pPanel || m_pConfiguration || m_pModel)
-        {
-            NV_PERF_LOG_ERR(20, "Already initialized\n");
-            return false;
-        }
-        m_pModel = &model;
-        bool success = InitializeScalarTextBlocks();
-        return success;
-    }
-
-    bool Render()
-    {
-        bool success = false;
-        if (m_pPanel)
-        {
-            success = Render(*m_pPanel);
-        }
-        else if (m_pConfiguration)
-        {
-            success = Render(*m_pConfiguration);
-        }
-        else if (m_pModel)
-        {
-            success = Render(*m_pModel);
-        }
-        else
-        {
-            NV_PERF_LOG_ERR(20, "Renderer has not been initialized\n");
-            return false;
-        }
-        return success;
     }
 };
 

@@ -176,6 +176,26 @@ extern "C" {
 
     NVPA_Status NVPW_CounterDataCombiner_CreateRange(NVPW_CounterDataCombiner_CreateRange_Params* pParams);
 
+    typedef struct NVPW_CounterDataCombiner_CopyIntoRange_Params
+    {
+        /// [in]
+        size_t structSize;
+        /// [in] assign to NULL
+        void* pPriv;
+        /// [in]
+        NVPA_CounterDataCombiner* pCounterDataCombiner;
+        /// [in]
+        size_t rangeIndexDst;
+        /// [in]
+        const uint8_t* pCounterDataSrc;
+        /// [in]
+        size_t rangeIndexSrc;
+    } NVPW_CounterDataCombiner_CopyIntoRange_Params;
+#define NVPW_CounterDataCombiner_CopyIntoRange_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_CounterDataCombiner_CopyIntoRange_Params, rangeIndexSrc)
+
+    /// In order to use this API, the source counter data and the destination counter data must have identical counters
+    NVPA_Status NVPW_CounterDataCombiner_CopyIntoRange(NVPW_CounterDataCombiner_CopyIntoRange_Params* pParams);
+
     typedef struct NVPW_CounterDataCombiner_AccumulateIntoRange_Params
     {
         /// [in]
@@ -426,6 +446,42 @@ extern "C" {
 
     /// Total num passes = numPasses * numNestingLevels
     NVPA_Status NVPW_RawMetricsConfig_GetNumPasses_V2(NVPW_RawMetricsConfig_GetNumPasses_V2_Params* pParams);
+
+    typedef struct NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Params
+    {
+        /// [in]
+        size_t structSize;
+        /// [in] assign to NULL
+        void* pPriv;
+        /// [in] Typically created by e.g. NVPW_RawMetricsConfig_GetConfigImage(), must be align(8).
+        const uint8_t* pConfig;
+        /// [in]
+        size_t configSize;
+        /// [out]
+        size_t sampleSize;
+    } NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Params;
+#define NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Params, sampleSize)
+
+    /// Estimate per sample records size based on a virtual device
+    NVPA_Status NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize(NVPW_PeriodicSampler_Config_GetSocEstimatedSampleSize_Params* pParams);
+
+    typedef struct NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Params
+    {
+        /// [in]
+        size_t structSize;
+        /// [in] assign to NULL
+        void* pPriv;
+        /// [in] Typically created by e.g. NVPW_RawMetricsConfig_GetConfigImage(), must be align(8).
+        const uint8_t* pConfig;
+        /// [in]
+        size_t configSize;
+        /// [out]
+        size_t sampleSize;
+    } NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Params;
+#define NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Params, sampleSize)
+
+    /// Estimate per sample records size based on a virtual device
+    NVPA_Status NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize(NVPW_PeriodicSampler_Config_GetGpuEstimatedSampleSize_Params* pParams);
 
 /**
  *  @}

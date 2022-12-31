@@ -38,41 +38,42 @@ namespace nv { namespace perf {
         res = configBuilder.PrepareConfigImage();
         if (!res)
         {
-            //std::cerr << "FAILED: D3D12CreateConfiguration - failed PrepareConfigImage\n";
+            NV_PERF_LOG_ERR(10, "PrepareConfigImage failed\n");
             return false;
         }
 
         const size_t configImageSize = configBuilder.GetConfigImageSize();
         if (!configImageSize)
         {
-            // std::cerr << "FAILED: GetConfigImageSize - failed PrepareConfigImage\n";
+            NV_PERF_LOG_ERR(10, "GetConfigImageSize failed\n");
             return false;
         }
         configuration.configImage.resize(configImageSize);
         if (!configBuilder.GetConfigImage(configuration.configImage.size(), &configuration.configImage[0]))
         {
-            //std::cerr << "FAILED: GetConfigImage - failed PrepareConfigImage\n";
+            NV_PERF_LOG_ERR(10, "GetConfigImage failed\n");
             return false;
         }
 
         const size_t counterDataPrefixSize = configBuilder.GetCounterDataPrefixSize();
         if (!counterDataPrefixSize)
         {
-            //std::cerr << "FAILED: GetCounterDataPrefixSize - failed PrepareConfigImage\n";
+            NV_PERF_LOG_ERR(10, "GetCounterDataPrefixSize failed\n");
             return false;
         }
         configuration.counterDataPrefix.resize(counterDataPrefixSize);
         if (!configBuilder.GetCounterDataPrefix(configuration.counterDataPrefix.size(), &configuration.counterDataPrefix[0]))
         {
-            //std::cerr << "FAILED: GetCounterDataPrefix - failed PrepareConfigImage\n";
+            NV_PERF_LOG_ERR(10, "GetCounterDataPrefix failed\n");
             return false;
         }
 
         NVPW_Config_GetNumPasses_V2_Params getNumPassesParams = { NVPW_Config_GetNumPasses_V2_Params_STRUCT_SIZE };
         getNumPassesParams.pConfig = &configuration.configImage[0];
         NVPA_Status nvpaStatus = NVPW_Config_GetNumPasses_V2(&getNumPassesParams);
-        if (nvpaStatus)
+        if (nvpaStatus != NVPA_STATUS_SUCCESS)
         {
+            NV_PERF_LOG_ERR(10, "NVPW_Config_GetNumPasses_V2 failed\n");
             return false;
         }
         configuration.numPasses = getNumPassesParams.numPasses;

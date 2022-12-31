@@ -343,20 +343,20 @@ namespace nv { namespace perf { namespace profiler {
             return m_stateMachine.IsCollectingReport();
         }
 
-        const std::string& GetReportDirectoryName() const
+        const std::string& GetLastReportDirectoryName() const
         {
-            return m_stateMachine.GetReportDirectoryName();
+            return m_stateMachine.GetLastReportDirectoryName();
         }
 
         /// Enqueues report collection, starting on the next frame.
-        bool StartCollectionOnNextFrame(const char* pDirectoryName, AppendDateTime appendDateTime)
+        bool StartCollectionOnNextFrame()
         {
             if (m_initStatus != ReportGeneratorInitStatus::Succeeded)
             {
                 NV_PERF_LOG_WRN(100, "skipping; the state of InitializeReportGenerator() is %s.\n", ToCString(m_initStatus));
                 return false;
             }
-            return m_stateMachine.StartCollectionOnNextFrame(pDirectoryName, appendDateTime);
+            return m_stateMachine.StartCollectionOnNextFrame();
         }
 
         /// Enables a frame-level parent range.

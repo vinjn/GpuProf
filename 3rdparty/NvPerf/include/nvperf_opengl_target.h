@@ -130,8 +130,10 @@ extern "C" {
         NVPW_SliSupportLevel sliSupportLevel;
         /// [out]
         NVPW_CmpSupportLevel cmpSupportLevel;
+        /// [out]
+        NVPW_WslSupportLevel wslSupportLevel;
     } NVPW_OpenGL_Profiler_IsGpuSupported_Params;
-#define NVPW_OpenGL_Profiler_IsGpuSupported_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_OpenGL_Profiler_IsGpuSupported_Params, cmpSupportLevel)
+#define NVPW_OpenGL_Profiler_IsGpuSupported_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_OpenGL_Profiler_IsGpuSupported_Params, wslSupportLevel)
 
     /// NVPW_OpenGL_LoadDriver must be called prior to this API
     NVPA_Status NVPW_OpenGL_Profiler_IsGpuSupported(NVPW_OpenGL_Profiler_IsGpuSupported_Params* pParams);

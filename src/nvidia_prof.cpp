@@ -268,9 +268,16 @@ int NvidiaInfo::update()
     {
         // NOTE: nvUtil.memory is the memory controller utilization not the frame buffer utilization
         nvRetValue = _nvmlDeviceGetUtilizationRates(handle, &nvUtilData);
-        if (NVML_ERROR_NOT_SUPPORTED == nvRetValue)
+        if (nvRetValue == NVML_ERROR_NOT_SUPPORTED)
         {
             bGPUUtilSupported = false;
+        }
+        else if (nvRetValue == NVML_ERROR_UNINITIALIZED)
+        {
+#if 0
+            nvidia_cleanup();
+            nvidia_setup();
+#endif
         }
         else CHECK_NVML(nvRetValue, nvmlDeviceGetUtilizationRates);
         metrics.addMetric(METRIC_SM_SOL, nvUtilData.gpu);

@@ -1806,7 +1806,7 @@ namespace nv { namespace perf { namespace hud {
                 {
                     return false;
                 }
-                if (!counterConfiguration.numPasses == 1u)
+                if (counterConfiguration.numPasses != 1u)
                 {
                     return false;
                 }

@@ -105,7 +105,7 @@ namespace nv { namespace perf {
             return true;
         }
 
-        bool AddMetrics(const NVPW_MetricEvalRequest* pMetricEvalRequests, size_t numMetricEvalRequests)
+        bool AddMetrics(const NVPW_MetricEvalRequest* pMetricEvalRequests, size_t numMetricEvalRequests, bool keepInstances = true)
         {
             NVPA_Status nvpaStatus;
             NVPW_MetricsEvaluator_GetMetricRawDependencies_Params getMetricRawDependenciesParams = { NVPW_MetricsEvaluator_GetMetricRawDependencies_Params_STRUCT_SIZE };
@@ -135,7 +135,7 @@ namespace nv { namespace perf {
             auto addRawMetric = [&](const char* const pRawMetricName, bool emitError) {
                 NVPA_RawMetricRequest rawMetricRequest = { NVPA_RAW_METRIC_REQUEST_STRUCT_SIZE };
                 rawMetricRequest.pMetricName = pRawMetricName;
-                rawMetricRequest.keepInstances = true;
+                rawMetricRequest.keepInstances = keepInstances;
 
                 NVPW_CounterDataBuilder_AddMetrics_Params addMetricParams = { NVPW_CounterDataBuilder_AddMetrics_Params_STRUCT_SIZE };
                 addMetricParams.numMetricRequests = 1;

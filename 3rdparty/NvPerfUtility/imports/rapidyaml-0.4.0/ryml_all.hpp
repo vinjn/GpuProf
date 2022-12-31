@@ -441,7 +441,8 @@ C4_FOR_EACH(PRN_STRUCT_OFFSETS, a, b, c);
        #endif
    #endif
    #if defined(__ARMEL__) || defined(__LITTLE_ENDIAN__) || defined(__AARCH64EL__) \
-       || (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
+       || (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) \
+       || defined(_M_ARM64) || defined(_M_ARM)
        #define C4_BYTE_ORDER _C4EL
    #elif defined(__ARMEB__) || defined(__BIG_ENDIAN__) || defined(__AARCH64EB__) \
        || (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__))

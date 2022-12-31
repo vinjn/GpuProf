@@ -434,6 +434,7 @@ namespace nv { namespace perf { namespace mini_trace {
                 case VK_API_VERSION_1_0:
                 {
                     deviceExtensionNames.push_back("VK_EXT_buffer_device_address");
+                    deviceExtensionNames.push_back("VK_KHR_device_group");
                     break;
                 }
 #endif
@@ -441,6 +442,7 @@ namespace nv { namespace perf { namespace mini_trace {
                 case VK_API_VERSION_1_1:
                 {
                     deviceExtensionNames.push_back("VK_EXT_buffer_device_address");
+                    deviceExtensionNames.push_back("VK_KHR_device_group");
                     break;
                 }
 #endif
@@ -536,6 +538,11 @@ namespace nv { namespace perf { namespace mini_trace {
                         NV_PERF_LOG_ERR(50, "Unsupported memory type\n");
                         return false;
                     }
+
+                    VkMemoryAllocateFlagsInfo memoryAllocateFlagsInfo{};
+                    memoryAllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+                    memoryAllocateFlagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+                    memAlloc.pNext = &memoryAllocateFlagsInfo;
 
                     vkResult = vkAllocateMemory(m_device, &memAlloc, nullptr, &m_traceBuffer.deviceMemory);
                     if (vkResult != VK_SUCCESS)

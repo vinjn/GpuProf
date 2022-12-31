@@ -60,6 +60,23 @@ namespace nv { namespace perf { namespace sampler {
         return true;
     }
 
+    inline bool GpuPeriodicSamplerIsKeepLatestModeSupported(size_t deviceIndex)
+    {
+        NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params isSupportedParams = { NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params_STRUCT_SIZE };
+        isSupportedParams.deviceIndex = deviceIndex;
+        NVPA_Status nvpaStatus = NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported(&isSupportedParams);
+        if (nvpaStatus != NVPA_STATUS_SUCCESS)
+        {
+            NV_PERF_LOG_ERR(10, "NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported failed, nvpaStatus = %d, deviceIndex = %llu\n", nvpaStatus, deviceIndex);
+            return false;
+        }
+        if (!isSupportedParams.isSupported)
+        {
+            return false;
+        }
+        return true;
+    }
+
     inline bool GpuPeriodicSamplerGetSupportedTriggers(size_t deviceIndex, std::set<NVPW_GPU_PeriodicSampler_TriggerSource>& supportedTriggers)
     {
         NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Params getSupportedTriggerSourcesParams = { NVPW_GPU_PeriodicSampler_GetSupportedTriggerSources_Params_STRUCT_SIZE };
@@ -304,9 +321,10 @@ namespace nv { namespace perf { namespace sampler {
 
         bool BeginSession(
             size_t recordBufferSize,
-            size_t maxNumUndecodedSamplingRanges,
+            size_t maxNumUndecodedSamplingRanges, // must be 1
             const std::vector<NVPW_GPU_PeriodicSampler_TriggerSource>& enabledTriggerSources,
-            uint64_t samplingInterval)
+            uint64_t samplingInterval,
+            NVPW_GPU_PeriodicSampler_RecordBuffer_AppendMode recordBufferAppendMode = NVPW_GPU_PERIODIC_SAMPLER_RECORD_BUFFER_APPEND_MODE_KEEP_OLDEST)
         {
             if (!m_isInitialized)
             {
@@ -321,21 +339,27 @@ namespace nv { namespace perf { namespace sampler {
                     return false;
                 }
             }
+            if ((recordBufferAppendMode == NVPW_GPU_PERIODIC_SAMPLER_RECORD_BUFFER_APPEND_MODE_KEEP_LATEST) && !GpuPeriodicSamplerIsKeepLatestModeSupported(m_deviceIndex))
+            {
+                NV_PERF_LOG_ERR(10, "Record buffer keep latest mode is not supported on the current GPU, deviceIndex = %llu\n", m_deviceIndex);
+                return false;
+            }
             std::vector<uint32_t> enabledTriggerSourcesU32;
             std::transform(enabledTriggerSources.begin(), enabledTriggerSources.end(), std::back_inserter(enabledTriggerSourcesU32), [](NVPW_GPU_PeriodicSampler_TriggerSource triggerSource) {
                 return static_cast<uint32_t>(triggerSource);
             });
-            NVPW_GPU_PeriodicSampler_BeginSession_Params beginSessionParams = { NVPW_GPU_PeriodicSampler_BeginSession_Params_STRUCT_SIZE };
+            NVPW_GPU_PeriodicSampler_BeginSession_V2_Params beginSessionParams = { NVPW_GPU_PeriodicSampler_BeginSession_V2_Params_STRUCT_SIZE };
             beginSessionParams.deviceIndex = m_deviceIndex;
             beginSessionParams.maxNumUndecodedSamplingRanges = maxNumUndecodedSamplingRanges;
             beginSessionParams.pTriggerSources = enabledTriggerSourcesU32.data();
             beginSessionParams.numTriggerSources = enabledTriggerSourcesU32.size();
             beginSessionParams.samplingInterval = samplingInterval;
             beginSessionParams.recordBufferSize = recordBufferSize;
-            const NVPA_Status nvpaStatus = NVPW_GPU_PeriodicSampler_BeginSession(&beginSessionParams);
+            beginSessionParams.recordBufferAppendMode = recordBufferAppendMode;
+            const NVPA_Status nvpaStatus = NVPW_GPU_PeriodicSampler_BeginSession_V2(&beginSessionParams);
             if (nvpaStatus != NVPA_STATUS_SUCCESS)
             {
-                NV_PERF_LOG_ERR(20, "NVPW_GPU_PeriodicSampler_BeginSession failed, nvpaStatus = %d, deviceIndex = %llu\n", nvpaStatus, m_deviceIndex);
+                NV_PERF_LOG_ERR(20, "NVPW_GPU_PeriodicSampler_BeginSession_V2 failed, nvpaStatus = %d, deviceIndex = %llu\n", nvpaStatus, m_deviceIndex);
                 return false;
             }
             m_inSession = true;
@@ -459,26 +483,28 @@ namespace nv { namespace perf { namespace sampler {
 
         bool DecodeCounters(
             std::vector<uint8_t>& counterDataImage,
-            size_t numSamplingRangesToDecode, // if 0, will decode all available ranges
+            size_t numSamplingRangesToDecode, // must be 1
             size_t& numSamplingRangesDecoded,
             bool& recordBufferOverflow,
             size_t& numSamplesDropped,
-            size_t& numSamplesMerged)
+            size_t& numSamplesMerged,
+            bool doNotDropSamples = false)
         {
             if (!m_inSession)
             {
                 NV_PERF_LOG_ERR(20, "DecodeCounters() called, but not in a session\n");
                 return false;
             }
-            NVPW_GPU_PeriodicSampler_DecodeCounters_Params decodeCountersParams = { NVPW_GPU_PeriodicSampler_DecodeCounters_Params_STRUCT_SIZE };
+            NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params decodeCountersParams = { NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params_STRUCT_SIZE };
             decodeCountersParams.deviceIndex = m_deviceIndex;
             decodeCountersParams.pCounterDataImage = counterDataImage.data();
             decodeCountersParams.counterDataImageSize = counterDataImage.size();
             decodeCountersParams.numRangesToDecode = numSamplingRangesToDecode;
-            const NVPA_Status nvpaStatus = NVPW_GPU_PeriodicSampler_DecodeCounters(&decodeCountersParams);
+            decodeCountersParams.doNotDropSamples = doNotDropSamples;
+            const NVPA_Status nvpaStatus = NVPW_GPU_PeriodicSampler_DecodeCounters_V2(&decodeCountersParams);
             if (nvpaStatus)
             {
-                NV_PERF_LOG_ERR(20, "NVPW_GPU_PeriodicSampler_DecodeCounters failed, nvpaStatus = %d, deviceIndex = %llu\n", nvpaStatus, m_deviceIndex);
+                NV_PERF_LOG_ERR(20, "NVPW_GPU_PeriodicSampler_DecodeCounters_V2 failed, nvpaStatus = %d, deviceIndex = %llu\n", nvpaStatus, m_deviceIndex);
                 return false;
             }
             numSamplingRangesDecoded = decodeCountersParams.numRangesDecoded;

@@ -22,6 +22,7 @@
 #include "NvPerfReportDefinitionTU10X.h"
 #include "NvPerfReportDefinitionTU11X.h"
 #include "NvPerfReportDefinitionGA10X.h"
+#include "NvPerfReportDefinitionAD10X.h"
 
 namespace nv { namespace perf {
 
@@ -41,7 +42,19 @@ namespace nv { namespace perf {
             {
                 return ga10x::PerRangeReport::GetReportDefinition();
             }
-            return {};
+            else if (false
+                     || !strcmp(pChipName, "AD102")
+                     || !strcmp(pChipName, "AD103")
+                     || !strcmp(pChipName, "AD104")
+            )    
+            {
+                return ad10x::PerRangeReport::GetReportDefinition();
+            }
+            else
+            {
+                NV_PERF_LOG_ERR(20, "Unknown chip \"%s\"\n", pChipName);
+                return {};
+            }
         }
 
     } // namespace PerRangeReport
@@ -62,7 +75,19 @@ namespace nv { namespace perf {
             {
                 return ga10x::SummaryReport::GetReportDefinition();
             }
-            return {};
+            else if (false
+                     || !strcmp(pChipName, "AD102")
+                     || !strcmp(pChipName, "AD103")
+                     || !strcmp(pChipName, "AD104")
+            )
+            {
+                return ad10x::SummaryReport::GetReportDefinition();
+            }
+            else
+            {
+                NV_PERF_LOG_ERR(20, "Unknown chip \"%s\"\n", pChipName);
+                return {};
+            }
         }
 
     } // namespace SummaryReport

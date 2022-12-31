@@ -49,3 +49,4 @@ bin/etw/*.txt
 GpuProf-*
 bin/
 imgui.ini
+/3rdparty/NvPerfUtility/build/x64/

@@ -117,7 +117,7 @@ extern "C" {
         NVPA_STATUS_OBJECT_MISMATCH = 23,
         /// Virtualized GPU (vGPU) is not supported.
         NVPA_STATUS_VIRTUALIZED_DEVICE_NOT_SUPPORTED = 24,
-        /// Profiling permission on a vGPU was not granted.
+        /// Profiling permission was not granted or the device was disabled.
         NVPA_STATUS_PROFILING_NOT_ALLOWED = 25,
         NVPA_STATUS__COUNT
     } NVPA_Status;

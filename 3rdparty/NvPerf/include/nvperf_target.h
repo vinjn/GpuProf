@@ -120,6 +120,18 @@ extern "C" {
     } NVPW_CmpSupportLevel;
 #endif //NVPW_CMP_SUPPORT_LEVEL_DEFINED
 
+#ifndef NVPW_WSL_SUPPORT_LEVEL_DEFINED
+#define NVPW_WSL_SUPPORT_LEVEL_DEFINED
+    /// WSL support level
+    typedef enum NVPW_WslSupportLevel
+    {
+        NVPW_WSL_SUPPORT_LEVEL_UNKNOWN = 0,
+        NVPW_WSL_SUPPORT_LEVEL_UNSUPPORTED_INSUFFICIENT_DRIVER_VERSION,
+        NVPW_WSL_SUPPORT_LEVEL_SUPPORTED,
+        NVPW_WSL_SUPPORT_LEVEL_SUPPORTED_NON_WSL_CONFIGURATION
+    } NVPW_WslSupportLevel;
+#endif //NVPW_WSL_SUPPORT_LEVEL_DEFINED
+
     typedef struct NVPW_InitializeTarget_Params
     {
         /// [in]
@@ -312,6 +324,8 @@ extern "C" {
 #define NVPW_API_SET_OPENGL_PROFILER           0xe4cd9ea40f2ee777ULL
 
 #define NVPW_API_SET_VULKAN_PROFILER           0x8c56b6a03d779689ULL
+
+#define NVPW_SDK_VERSION               0x1e128b6f001423fcULL
 
     typedef struct NVPW_QueryVersionNumber_Params
     {

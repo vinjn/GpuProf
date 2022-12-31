@@ -162,6 +162,16 @@ namespace nv { namespace perf { namespace sampler {
             return m_periodicSamplerGpu.GetDeviceIdentifiers();
         }
 
+        RingBufferCounterData& GetRingBufferCounterData()
+        {
+            return m_counterData;
+        }
+
+        const RingBufferCounterData& GetRingBufferCounterData() const
+        {
+            return m_counterData;
+        }
+
         const std::vector<uint8_t>& GetCounterData() const
         {
             return m_counterData.GetCounterData();

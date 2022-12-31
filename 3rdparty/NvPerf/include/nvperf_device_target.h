@@ -84,6 +84,15 @@ extern "C" {
     } NVPW_GPU_PeriodicSampler_TriggerSource;
 #endif //NVPW_GPU_PERIODIC_SAMPLER_TRIGGER_SOURCE_DEFINED
 
+#ifndef NVPW_GPU_PERIODIC_SAMPLER_RECORD_BUFFER_APPEND_MODE_DEFINED
+#define NVPW_GPU_PERIODIC_SAMPLER_RECORD_BUFFER_APPEND_MODE_DEFINED
+    typedef enum NVPW_GPU_PeriodicSampler_RecordBuffer_AppendMode
+    {
+        NVPW_GPU_PERIODIC_SAMPLER_RECORD_BUFFER_APPEND_MODE_KEEP_OLDEST = 0,
+        NVPW_GPU_PERIODIC_SAMPLER_RECORD_BUFFER_APPEND_MODE_KEEP_LATEST = 1
+    } NVPW_GPU_PeriodicSampler_RecordBuffer_AppendMode;
+#endif //NVPW_GPU_PERIODIC_SAMPLER_RECORD_BUFFER_APPEND_MODE_DEFINED
+
     typedef struct NVPW_GPU_PeriodicSampler_CounterDataImageOptions
     {
         /// [in]
@@ -118,8 +127,10 @@ extern "C" {
         NVPW_ConfidentialComputeSupportLevel confidentialComputeSupportLevel;
         /// [out]
         NVPW_CmpSupportLevel cmpSupportLevel;
+        /// [out]
+        NVPW_WslSupportLevel wslSupportLevel;
     } NVPW_GPU_PeriodicSampler_IsGpuSupported_Params;
-#define NVPW_GPU_PeriodicSampler_IsGpuSupported_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_GPU_PeriodicSampler_IsGpuSupported_Params, cmpSupportLevel)
+#define NVPW_GPU_PeriodicSampler_IsGpuSupported_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_GPU_PeriodicSampler_IsGpuSupported_Params, wslSupportLevel)
 
     /// LoadDriver must be called prior to this API.
     NVPA_Status NVPW_GPU_PeriodicSampler_IsGpuSupported(NVPW_GPU_PeriodicSampler_IsGpuSupported_Params* pParams);
@@ -166,7 +177,8 @@ extern "C" {
     } NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Params;
 #define NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Params, recordBufferSize)
 
-    /// LoadDriver must be called prior to this API.
+    /// Calculate record buffer size based on a real device. LoadDriver must be called prior to this API. The returned
+    /// size will be aligned up to meet OS/HW requirements.
     NVPA_Status NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize(NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize_Params* pParams);
 
     typedef struct NVPW_GPU_PeriodicSampler_BeginSession_Params
@@ -178,7 +190,7 @@ extern "C" {
         /// [in]
         size_t deviceIndex;
         /// [in] maximum number of undecoded sampling ranges there can be, where a sampling range is formed by one pair
-        /// of `NVPW_GPU_PeriodicSampler_StartSampling` & `NVPW_GPU_PeriodicSampler_StopSampling`
+        /// of `NVPW_GPU_PeriodicSampler_StartSampling` & `NVPW_GPU_PeriodicSampler_StopSampling`. Must be 1.
         size_t maxNumUndecodedSamplingRanges;
         /// [in] an array of trigger sources to use during the session, where each element is one of
         /// `NVPW_GPU_PeriodicSampler_TriggerSource`. Some combinations can be invalid.
@@ -197,8 +209,41 @@ extern "C" {
     } NVPW_GPU_PeriodicSampler_BeginSession_Params;
 #define NVPW_GPU_PeriodicSampler_BeginSession_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_GPU_PeriodicSampler_BeginSession_Params, recordBufferSize)
 
-    /// LoadDriver must be called prior to this API.
+    /// This API is deprecated, please use `NVPW_GPU_PeriodicSampler_BeginSession_V2` instead.
     NVPA_Status NVPW_GPU_PeriodicSampler_BeginSession(NVPW_GPU_PeriodicSampler_BeginSession_Params* pParams);
+
+    typedef struct NVPW_GPU_PeriodicSampler_BeginSession_V2_Params
+    {
+        /// [in]
+        size_t structSize;
+        /// [in] assign to NULL
+        void* pPriv;
+        /// [in]
+        size_t deviceIndex;
+        /// [in] maximum number of undecoded sampling ranges there can be, where a sampling range is formed by one pair
+        /// of `NVPW_GPU_PeriodicSampler_StartSampling` & `NVPW_GPU_PeriodicSampler_StopSampling`. Must be 1.
+        size_t maxNumUndecodedSamplingRanges;
+        /// [in] an array of trigger sources to use during the session, where each element is one of
+        /// `NVPW_GPU_PeriodicSampler_TriggerSource`. Some combinations can be invalid.
+        const uint32_t* pTriggerSources;
+        /// [in]
+        size_t numTriggerSources;
+        /// [in] if trigger sources include `NVPW_GPU_PERIODIC_SAMPLER_TRIGGER_SOURCE_GPU_SYSCLK_INTERVAL`, then it
+        /// should be the number of SYS CLKs; or if trigger sources include
+        /// `NVPW_GPU_PERIODIC_SAMPLER_TRIGGER_SOURCE_GPU_TIME_INTERVAL`, then it should be the number of nanoseconds;
+        /// otherwise it's not used.
+        uint64_t samplingInterval;
+        /// [in] output of `NVPW_GPU_PeriodicSampler_CalculateRecordBufferSize`. If multiple configs will be used in a
+        /// session, use their max size here. This value may be clamped internally to meet HW & profiling requirements,
+        /// the actual allocated size can be queried via `NVPW_GPU_PeriodicSampler_GetRecordBufferStatus`
+        size_t recordBufferSize;
+        /// [in] one of `NVPW_GPU_PeriodicSampler_RecordBuffer_AppendMode`
+        uint32_t recordBufferAppendMode;
+    } NVPW_GPU_PeriodicSampler_BeginSession_V2_Params;
+#define NVPW_GPU_PeriodicSampler_BeginSession_V2_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_GPU_PeriodicSampler_BeginSession_V2_Params, recordBufferAppendMode)
+
+    /// LoadDriver must be called prior to this API.
+    NVPA_Status NVPW_GPU_PeriodicSampler_BeginSession_V2(NVPW_GPU_PeriodicSampler_BeginSession_V2_Params* pParams);
 
     typedef struct NVPW_GPU_PeriodicSampler_EndSession_Params
     {
@@ -350,7 +395,8 @@ extern "C" {
     } NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Params;
 #define NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Params, overflow)
 
-    /// This API must be called inside a session.
+    /// This API must be called inside a session. Due to hardware limitation, `overflow` and `usedSize` may be
+    /// temporarily out-of-sync during sampling.
     NVPA_Status NVPW_GPU_PeriodicSampler_GetRecordBufferStatus(NVPW_GPU_PeriodicSampler_GetRecordBufferStatus_Params* pParams);
 
     typedef struct NVPW_GPU_PeriodicSampler_DecodeCounters_Params
@@ -380,7 +426,55 @@ extern "C" {
     } NVPW_GPU_PeriodicSampler_DecodeCounters_Params;
 #define NVPW_GPU_PeriodicSampler_DecodeCounters_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_GPU_PeriodicSampler_DecodeCounters_Params, numSamplesMerged)
 
+    /// This API is deprecated, please use `NVPW_GPU_PeriodicSampler_DecodeCounters_V2` instead.
     NVPA_Status NVPW_GPU_PeriodicSampler_DecodeCounters(NVPW_GPU_PeriodicSampler_DecodeCounters_Params* pParams);
+
+    typedef struct NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params
+    {
+        /// [in]
+        size_t structSize;
+        /// [in] assign to NULL
+        void* pPriv;
+        /// [in]
+        size_t deviceIndex;
+        /// [in]
+        uint8_t* pCounterDataImage;
+        /// [in]
+        size_t counterDataImageSize;
+        /// [in] number of sampling ranges to decode, where a sampling range is formed by one pair of
+        /// `NVPW_GPU_PeriodicSampler_StartSampling` & `NVPW_GPU_PeriodicSampler_StopSampling`. Must be 1.
+        size_t numRangesToDecode;
+        /// [in] in case the counter data buffer is full, stop decoding where it is as opposed to proceeding and
+        /// dropping samples.
+        NVPA_Bool doNotDropSamples;
+        /// [out] number of sampling ranges fully decoded
+        size_t numRangesDecoded;
+        /// [out]
+        NVPA_Bool recordBufferOverflow;
+        /// [out] number of samples dropped due to CounterDataImage overflow
+        size_t numSamplesDropped;
+        /// [out] number of samples merged due to insufficient sample interval
+        size_t numSamplesMerged;
+    } NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params;
+#define NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params, numSamplesMerged)
+
+    NVPA_Status NVPW_GPU_PeriodicSampler_DecodeCounters_V2(NVPW_GPU_PeriodicSampler_DecodeCounters_V2_Params* pParams);
+
+    typedef struct NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params
+    {
+        /// [in]
+        size_t structSize;
+        /// [in] assign to NULL
+        void* pPriv;
+        /// [in]
+        size_t deviceIndex;
+        /// [out]
+        NVPA_Bool isSupported;
+    } NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params;
+#define NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params_STRUCT_SIZE NVPA_STRUCT_SIZE(NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params, isSupported)
+
+    /// LoadDriver must be called prior to this API.
+    NVPA_Status NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported(NVPW_GPU_PeriodicSampler_IsRecordBufferKeepLatestModeSupported_Params* pParams);
 
 /**
  *  @}

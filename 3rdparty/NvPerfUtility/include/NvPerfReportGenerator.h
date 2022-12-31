@@ -119,6 +119,9 @@ namespace nv { namespace perf {
         bool enableHtmlReport = true;
         bool enableCsvReport = true;
         std::vector<ReportWriterFn> reportWriters;  ///< User-defined report writers
+        std::string directoryName; ///< A directory will be created based on this name if either html or csv writer is enabled or this is a non-empty string;
+                                   ///< if it's an empty string but either html or csv writer is enabled, then it will be assigned to the default value "NvPerfReports"
+        AppendDateTime appendDateTimeToDirName = AppendDateTime::yes; ///< Only matters when a directory will be created
     };
 
     inline size_t GetTotalNumSubmetrics(const BaseMetricRequests& baseMetricRequests, const SubmetricRequests& submetricRequests)
@@ -748,8 +751,7 @@ namespace nv { namespace perf {
                 sstream << "}\n";
                 metricIndexPrev = metricIndex;
             }
-            const size_t totalNumSubmetrics = GetTotalNumSubmetrics(reportLayout.summary.baseMetricRequests, reportLayout.summary.submetricRequests);
-            assert(metricIndex == totalNumSubmetrics);
+            assert(metricIndex == GetTotalNumSubmetrics(reportLayout.summary.baseMetricRequests, reportLayout.summary.submetricRequests));
 
             std::string jsonContents = sstream.str();
             return jsonContents;
@@ -874,7 +876,7 @@ namespace nv { namespace perf { namespace profiler {
         // state machine
         bool m_explicitSession;
         std::string m_reportDirectoryName;
-        uint64_t m_collectionTime;
+        bool m_inCollection;
         bool m_setConfigDone;
 
     protected:
@@ -955,7 +957,7 @@ namespace nv { namespace perf { namespace profiler {
             , m_openReportDirectoryAfterCollection(false)
             , m_explicitSession(false)
             , m_reportDirectoryName()
-            , m_collectionTime()
+            , m_inCollection(false)
             , m_setConfigDone(false)
         {
             std::string envValue;
@@ -970,7 +972,7 @@ namespace nv { namespace perf { namespace profiler {
         {
             m_setConfigDone = false;
             m_reportDirectoryName.clear();
-            m_collectionTime = 0;
+            m_inCollection = false;
             m_explicitSession = false;
 
             m_numNestingLevels = 1;
@@ -1100,6 +1102,7 @@ namespace nv { namespace perf { namespace profiler {
                     {
                         NV_PERF_LOG_ERR(10, "BeginSession failed\n");
                         m_reportDirectoryName.clear();
+                        m_inCollection = false;
                         return false;
                     }
                 }
@@ -1170,8 +1173,51 @@ namespace nv { namespace perf { namespace profiler {
                             return;
                         }
 
+                        auto now = std::chrono::system_clock::now();
+                        const uint64_t secondsSinceEpoch = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(now));
+
+                        m_reportDirectoryName = outputOptions.directoryName;
+                        const bool createDir = outputOptions.enableHtmlReport || outputOptions.enableCsvReport || !m_reportDirectoryName.empty();
+                        if (createDir)
+                        {
+                            if (m_reportDirectoryName.empty())
+                            {
+                                m_reportDirectoryName = "NvPerfReports";
+                            }
+                            if (outputOptions.appendDateTimeToDirName == AppendDateTime::yes)
+                            {
+                                const std::string formattedTime = FormatTime(secondsSinceEpoch);
+                                if (!formattedTime.empty())
+                                {
+                                    m_reportDirectoryName += std::string(1, NV_PERF_PATH_SEPARATOR) + formattedTime;
+                                }
+                            }
+                            auto isPathSeparator = [](char c) {
+                                return (c == NV_PERF_PATH_SEPARATOR);
+                            };
+                            if (!isPathSeparator(m_reportDirectoryName.back()))
+                            {
+                                m_reportDirectoryName += NV_PERF_PATH_SEPARATOR;
+                            }
+
+                            // try to recursively create the directory
+                            for (size_t di = 0; di < m_reportDirectoryName.length(); ++di)
+                            {
+                                if (isPathSeparator(m_reportDirectoryName[di]))
+                                {
+                                    std::string parentDir(m_reportDirectoryName, 0, di);
+#ifdef WIN32
+                                    BOOL dirCreated = CreateDirectoryA(parentDir.c_str(), NULL);
+#else
+                                    bool dirCreated = !mkdir(parentDir.c_str(), 0777);
+#endif
+                                    if (!dirCreated) { /* it probably already exists */ }
+                                }
+                            }
+                        }
+
                         ReportData reportData = {};
-                        reportData.secondsSinceEpoch = m_collectionTime;
+                        reportData.secondsSinceEpoch = secondsSinceEpoch;
                         reportData.clockStatus = m_clockStatus;
                         reportData.pCounterDataImage = decodeResult.counterDataImage.data();
                         reportData.counterDataImageSize = decodeResult.counterDataImage.size();
@@ -1201,8 +1247,20 @@ namespace nv { namespace perf { namespace profiler {
 
                         if (outputOptions.enableHtmlReport)
                         {
-                            SummaryReport::WriteHtmlReportFile(m_metricsEvaluator, m_reportLayout, reportData);
-                            PerRangeReport::WriteHtmlReportFiles(m_metricsEvaluator, m_reportLayout, reportData);
+                            [&]() {
+                                const std::string filename = m_reportDirectoryName + NV_PERF_PATH_SEPARATOR + "readme.html";
+                                FILE* fp = OpenFile(filename.c_str(), "wt");
+                                if (!fp)
+                                {
+                                    NV_PERF_LOG_ERR(50, "Failed to create files in directory %s, skipping writing HTML files\n", m_reportDirectoryName.c_str());
+                                    return;
+                                }
+                                fprintf(fp, "%s", GetReadMeHtml().c_str());
+                                fclose(fp);
+
+                                SummaryReport::WriteHtmlReportFile(m_metricsEvaluator, m_reportLayout, reportData);
+                                PerRangeReport::WriteHtmlReportFiles(m_metricsEvaluator, m_reportLayout, reportData);
+                            }();
                         }
 
                         if (outputOptions.enableCsvReport)
@@ -1216,7 +1274,7 @@ namespace nv { namespace perf { namespace profiler {
                             reportWriter(m_metricsEvaluator, m_reportLayout, reportData);
                         }
 
-                        if (m_openReportDirectoryAfterCollection)
+                        if (createDir && m_openReportDirectoryAfterCollection)
                         {
 #if defined(_WIN32)
                             intptr_t shellExecResult = (intptr_t)ShellExecuteA(NULL, "explore", m_reportDirectoryName.c_str(), NULL, NULL, SW_SHOWNORMAL);
@@ -1247,8 +1305,7 @@ namespace nv { namespace perf { namespace profiler {
                         }
                     }();
 
-                    m_reportDirectoryName.clear();
-                    m_collectionTime = 0;
+                    m_inCollection = false;
                     if (!m_explicitSession)
                     {
                         if (!m_reportProfiler.EndSession())
@@ -1265,68 +1322,22 @@ namespace nv { namespace perf { namespace profiler {
         }
 
         // Request to start collection on the next FrameStart.
-        bool StartCollectionOnNextFrame(const char* pDirectoryName, AppendDateTime appendDateTime)
+        bool StartCollectionOnNextFrame()
         {
-            if (!m_reportDirectoryName.empty())
+            if (m_inCollection)
             {
-                return true; // there is already one active collection session going on
-            }
-            std::string reportDirectoryName(pDirectoryName);
-            if (appendDateTime == AppendDateTime::yes)
-            {
-                auto now = std::chrono::system_clock::now();
-                const time_t secondsSinceEpoch = std::chrono::system_clock::to_time_t(now);
-                m_collectionTime = static_cast<uint64_t>(secondsSinceEpoch);
-                const std::string formattedTime = FormatTime(secondsSinceEpoch);
-                if (!formattedTime.empty())
-                {
-                    reportDirectoryName += std::string(1, NV_PERF_PATH_SEPARATOR) + formattedTime;
-                }
-            }
-            auto isPathSeparator = [](char c) {
-                return (c == NV_PERF_PATH_SEPARATOR);
-            };
-            if (!isPathSeparator(reportDirectoryName.back()))
-            {
-                reportDirectoryName += NV_PERF_PATH_SEPARATOR;
+                return true;
             }
 
-            // try to recursively create the directory
-            for (size_t di = 0; di < reportDirectoryName.length(); ++di)
-            {
-                if (isPathSeparator(reportDirectoryName[di]))
-                {
-                    std::string parentDir(reportDirectoryName, 0, di);
-#ifdef WIN32
-                    BOOL dirCreated = CreateDirectoryA(parentDir.c_str(), NULL);
-#else
-                    bool dirCreated = !mkdir(parentDir.c_str(), 0777);
-#endif
-                    if (!dirCreated) { /* it probably already exists */ }
-                }
-            }
-
-            // try to create a file in the directory
-            {
-                const std::string filename = reportDirectoryName + NV_PERF_PATH_SEPARATOR + "readme.html";
-                FILE* fp = OpenFile(filename.c_str(), "wt");
-                if (!fp)
-                {
-                    NV_PERF_LOG_ERR(50, "Failed to create files in directory %s, data collection might be skipped\n", reportDirectoryName.c_str());
-                    return false; // note IsCollectingReport() will return false
-                }
-                fprintf(fp, "%s", GetReadMeHtml().c_str());
-                fclose(fp);
-            }
             m_clockStatus = GetDeviceClockState(m_deviceIndex);
-            m_reportDirectoryName = reportDirectoryName;
+            m_inCollection = true;
             return true;
         }
 
         void ResetCollection()
         {
             m_reportDirectoryName.clear();
-            m_collectionTime = 0;
+            m_inCollection = false;
             m_clockStatus = NVPW_DEVICE_CLOCK_STATUS_UNKNOWN;
             if (m_reportProfiler.IsInSession())
             {
@@ -1339,10 +1350,10 @@ namespace nv { namespace perf { namespace profiler {
         // Returns true if a report is still queued for collection.
         bool IsCollectingReport() const
         {
-            return !m_reportDirectoryName.empty();
+            return m_inCollection;
         }
 
-        const std::string& GetReportDirectoryName() const
+        const std::string& GetLastReportDirectoryName() const
         {
             return m_reportDirectoryName;
         }

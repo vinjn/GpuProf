@@ -18,7 +18,7 @@
 
 #include "NvPerfReportDefinition.h"
 
-namespace nv { namespace perf { namespace ga10x {
+namespace nv { namespace perf { namespace ad10x {
 
     namespace PerRangeReport {
 

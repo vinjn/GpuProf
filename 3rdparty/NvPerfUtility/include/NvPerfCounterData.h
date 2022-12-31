@@ -152,6 +152,22 @@ namespace nv { namespace perf {
             return true;
         }
 
+        bool CopyIntoRange(size_t rangeIndexDst, const uint8_t* pCounterDataSrc, size_t rangeIndexSrc)
+        {
+            NVPW_CounterDataCombiner_CopyIntoRange_Params copyIntoRangeParams = { NVPW_CounterDataCombiner_CopyIntoRange_Params_STRUCT_SIZE };
+            copyIntoRangeParams.pCounterDataCombiner = m_pCounterDataCombiner;
+            copyIntoRangeParams.rangeIndexDst = rangeIndexDst;
+            copyIntoRangeParams.pCounterDataSrc = pCounterDataSrc;
+            copyIntoRangeParams.rangeIndexSrc = rangeIndexSrc;
+            NVPA_Status nvpaStatus = NVPW_CounterDataCombiner_CopyIntoRange(&copyIntoRangeParams);
+            if (nvpaStatus != NVPA_STATUS_SUCCESS)
+            {
+                NV_PERF_LOG_ERR(50, "NVPW_CounterDataCombiner_CopyIntoRange failed, nvpaStatus = %d\n", nvpaStatus);
+                return false;
+            }
+            return true;
+        }
+
         bool AccumulateIntoRange(
             size_t rangeIndexDst,
             uint32_t dstMultiplier,

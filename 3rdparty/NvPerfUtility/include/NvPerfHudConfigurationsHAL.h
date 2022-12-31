@@ -22,6 +22,7 @@
 #include "NvPerfHudConfigurationsTU10X.h"
 #include "NvPerfHudConfigurationsTU11X.h"
 #include "NvPerfHudConfigurationsGA10X.h"
+#include "NvPerfHudConfigurationsAD10X.h"
 
 namespace nv { namespace perf { namespace hud {
 
@@ -37,9 +38,17 @@ namespace nv { namespace perf { namespace hud {
             {
                 return tu11x::HudConfigurations::GetHudConfigurationsSize();
             }
-            else if (!strcmp(pChipName, "GA102") || !strcmp(pChipName, "GA103") ||!strcmp(pChipName, "GA104") || !strcmp(pChipName, "GA106") || !strcmp(pChipName, "GA107"))
+            else if (!strcmp(pChipName, "GA102") || !strcmp(pChipName, "GA103") || !strcmp(pChipName, "GA104") || !strcmp(pChipName, "GA106") || !strcmp(pChipName, "GA107"))
             {
                 return ga10x::HudConfigurations::GetHudConfigurationsSize();
+            }
+            else if (false
+                     || !strcmp(pChipName, "AD102")
+                     || !strcmp(pChipName, "AD103")
+                     || !strcmp(pChipName, "AD104")
+                )
+            {
+                return ad10x::HudConfigurations::GetHudConfigurationsSize();
             }
             else
             {
@@ -62,6 +71,14 @@ namespace nv { namespace perf { namespace hud {
             {
                 return ga10x::HudConfigurations::GetHudConfigurationsFileNames();
             }
+            else if (false
+                     || !strcmp(pChipName, "AD102")
+                     || !strcmp(pChipName, "AD103")
+                     || !strcmp(pChipName, "AD104")
+                )
+            {
+                return ad10x::HudConfigurations::GetHudConfigurationsFileNames();
+            }
             else
             {
                 NV_PERF_LOG_ERR(20, "Unknown chip \"%s\"\n", pChipName);
@@ -79,9 +96,17 @@ namespace nv { namespace perf { namespace hud {
             {
                 return tu11x::HudConfigurations::GetHudConfigurations();
             }
-            else if (!strcmp(pChipName, "GA102") || !strcmp(pChipName, "GA103") ||!strcmp(pChipName, "GA104") || !strcmp(pChipName, "GA106") || !strcmp(pChipName, "GA107"))
+            else if (!strcmp(pChipName, "GA102") || !strcmp(pChipName, "GA103") || !strcmp(pChipName, "GA104") || !strcmp(pChipName, "GA106") || !strcmp(pChipName, "GA107"))
             {
                 return ga10x::HudConfigurations::GetHudConfigurations();
+            }
+            else if (false
+                     || !strcmp(pChipName, "AD102")
+                     || !strcmp(pChipName, "AD103")
+                     || !strcmp(pChipName, "AD104")
+                )
+            {
+                return ad10x::HudConfigurations::GetHudConfigurations();
             }
             else
             {
