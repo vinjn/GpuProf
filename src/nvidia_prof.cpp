@@ -65,7 +65,7 @@ void ShowErrorDetails(const nvmlReturn_t nvRetVal, const char* pFunctionName);
 #define CHECK_NVML(nvRetValue, func) \
             if (NVML_SUCCESS != nvRetValue) \
             { \
-                if (nvRetValue != NVML_ERROR_NO_PERMISSION) \
+                if (nvRetValue != NVML_ERROR_NO_PERMISSION && nvRetValue != NVML_ERROR_NOT_SUPPORTED) \
                 { \
                     ShowErrorDetails(nvRetValue, #func); \
                 } \
@@ -148,6 +148,7 @@ struct NvidiaInfo
     uint32_t pcieLinkGeneration = 0;
     uint32_t pcieCurrentSpeed = 0;
     nvmlDriverModel_t driverModel, pendingDriverModel;
+    nvmlBrandType_t brandType = NVML_BRAND_UNKNOWN;
     char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
     uint32_t numLinks;
     nvmlEnableState_t nvlinkActives[NVML_NVLINK_MAX_LINKS];
@@ -189,7 +190,7 @@ int NvidiaInfo::setup()
     printf("%d", deviceId);
     nvRetValue = _nvmlDeviceGetPciInfo_v3(handle, &pciInfo);
     CHECK_NVML(nvRetValue, nvmlDeviceGetPciInfo);
-
+    
     nvRetValue = _nvmlDeviceGetDisplayMode(handle, &bMonitorConnected);
     //CHECK_NVML(nvRetValue, nvmlDeviceGetDisplayMode);
 
@@ -233,12 +234,14 @@ int NvidiaInfo::setup()
     }
     else printf("\tN/A");
 
-
     if (_nvmlDeviceGetCurrPcieLinkWidth && _nvmlDeviceGetCurrPcieLinkGeneration)
     {
         _nvmlDeviceGetCurrPcieLinkWidth(handle, &pcieLinkWidth);
         _nvmlDeviceGetCurrPcieLinkGeneration(handle, &pcieLinkGeneration);
-        printf("\t%u.0 x%u", pcieLinkGeneration, pcieLinkWidth);
+        if (pcieLinkGeneration != 0)
+            printf("\t%u.0 x%u", pcieLinkGeneration, pcieLinkWidth);
+        else
+            printf("\tN/A");
     }
     else printf("\tN/A");
 
@@ -252,7 +255,35 @@ int NvidiaInfo::setup()
     // Get the device name
     nvRetValue = _nvmlDeviceGetName(handle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
     CHECK_NVML(nvRetValue, nvmlDeviceGetName);
-    printf("\t%s\n", cDevicename);
+    printf("\t%s", cDevicename);
+
+    nvRetValue = _nvmlDeviceGetBrand(handle, &brandType);
+    //CHECK_NVML(nvRetValue, nvmlDeviceGetBrand);
+
+    char* brandName = "";
+#define ENTRY(type, desc) case type: brandName = desc; break;
+    switch (brandType)
+    {
+        ENTRY(NVML_BRAND_UNKNOWN, "UNKNOWN");
+        ENTRY(NVML_BRAND_QUADRO, "QUADRO");
+        ENTRY(NVML_BRAND_TESLA, "TESLA");
+        ENTRY(NVML_BRAND_NVS, "NVS");
+        ENTRY(NVML_BRAND_GRID, "GRID");
+        ENTRY(NVML_BRAND_GEFORCE, "GEFORCE");
+        ENTRY(NVML_BRAND_TITAN, "TITAN");
+        ENTRY(NVML_BRAND_NVIDIA_VAPPS, "Virtual Applications");
+        ENTRY(NVML_BRAND_NVIDIA_VPC, "Virtual PC");
+        ENTRY(NVML_BRAND_NVIDIA_VCS, "Virtual Compute Server");
+        ENTRY(NVML_BRAND_NVIDIA_VWS, "RTX Virtual Workstation");
+        ENTRY(NVML_BRAND_NVIDIA_CLOUD_GAMING, "Cloud Gaming");
+        ENTRY(NVML_BRAND_QUADRO_RTX, "QUADRO RTX");
+        ENTRY(NVML_BRAND_NVIDIA_RTX, "NVIDIA RTX");
+        ENTRY(NVML_BRAND_NVIDIA, "NVIDIA");
+        ENTRY(NVML_BRAND_GEFORCE_RTX, "GEFORCE RTX");
+        ENTRY(NVML_BRAND_TITAN_RTX, "TITAN RTX");
+    }
+
+    printf("\t%s\n", brandName);
 
     return 0;
 }
@@ -575,7 +606,7 @@ int nvidia_setup()
 
     bool bNVLinkSupported = false;
 
-    printf("GPU\tMODE\tCORES\tBUS\tPCIe\tGB/s\tNAME\n");
+    printf("GPU\tMODE\tCORES\tBUS\tPCIe\tGB/s\tNAME\tBRAND\n");
 
     NvidiaInfos.resize(uiNumGPUs);
 
