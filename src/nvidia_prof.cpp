@@ -378,7 +378,7 @@ int NvidiaInfo::update()
     metrics.addMetric(METRIC_NVDEC_SOL, uiVidDecoderUtil);
 
     // Clock
-    uint32_t clocks[NVML_CLOCK_COUNT];
+    uint32_t clocks[NVML_CLOCK_COUNT] = {};
     for (int i = 0; i < NVML_CLOCK_COUNT; i++)
     {
         nvRetValue = _nvmlDeviceGetClockInfo(handle, nvmlClockType_t(i), clocks + i);
@@ -390,7 +390,7 @@ int NvidiaInfo::update()
     }
 
     // pcie traffic
-    uint32_t pcieUtils[NVML_PCIE_UTIL_COUNT];
+    uint32_t pcieUtils[NVML_PCIE_UTIL_COUNT] = {};
     uint32_t pcieUtilSum = 0;
     for (int i = 0; i < NVML_PCIE_UTIL_COUNT; i++)
     {
@@ -403,7 +403,7 @@ int NvidiaInfo::update()
 
         pcieUtilSum += pcieUtils[i];
     }
-    float sol = pcieUtilSum * 0.1 / pcieCurrentSpeed;
+    float sol = pcieUtilSum * 0.1 / (pcieCurrentSpeed + 0.1f);
     metrics.addMetric(METRIC_PCIE_SOL, sol);
 
     // Output the utilization results depending on which of the counters has data available
