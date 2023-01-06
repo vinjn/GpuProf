@@ -68,8 +68,6 @@ void ShowErrorDetails(const nvmlReturn_t nvRetVal, const char* pFunctionName);
                 if (nvRetValue != NVML_ERROR_NO_PERMISSION) \
                 { \
                     ShowErrorDetails(nvRetValue, #func); \
-                    _nvmlShutdown(); \
-                    return -1; \
                 } \
             }
 
@@ -262,7 +260,7 @@ int NvidiaInfo::setup()
 int NvidiaInfo::update()
 {
     nvmlReturn_t nvRetValue = NVML_SUCCESS;
-    nvmlUtilization_t nvUtilData;
+    nvmlUtilization_t nvUtilData = {};
 
     // SM and MEM
     {
@@ -497,7 +495,7 @@ void NvidiaInfo::draw(bool show_legends)
         int k = 0;
         for (const auto& p : ProcInfos)
         {
-            img.draw_text(140, FONT_HEIGHT * (k + 1),
+            img.draw_text(100, FONT_HEIGHT * (k + 1),
                 "%s (%d): %d%% | %d%% \n",
                 colors[9], 0, 1, FONT_HEIGHT,
                 p.exeName.c_str(), p.pid, p.gpuStats.gpuUtilization, p.gpuStats.memoryUtilization);
