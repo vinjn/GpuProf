@@ -308,7 +308,7 @@ int NvidiaInfo::update()
             nvidia_setup();
 #endif
         }
-        else CHECK_NVML(nvRetValue, nvmlDeviceGetUtilizationRates);
+        //else CHECK_NVML(nvRetValue, nvmlDeviceGetUtilizationRates);
         metrics.addMetric(METRIC_SM_SOL, nvUtilData.gpu);
         metrics.addMetric(METRIC_MEM_SOL, nvUtilData.memory);
     }
