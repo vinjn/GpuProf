@@ -24,7 +24,7 @@
  */
 
 #define _HAS_STD_BYTE 0
-#define GPU_PROF_VERSION "1.3"
+#define GPU_PROF_VERSION "1.4"
 
 #include <stdio.h>
 #include <stdint.h>
