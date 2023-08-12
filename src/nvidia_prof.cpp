@@ -149,6 +149,7 @@ struct NvidiaInfo
     uint32_t pcieCurrentSpeed = 0;
     nvmlDriverModel_t driverModel, pendingDriverModel;
     nvmlBrandType_t brandType = NVML_BRAND_UNKNOWN;
+    nvmlDeviceArchitecture_t deviceArch = NVML_DEVICE_ARCH_UNKNOWN;
     char cDevicename[NVML_DEVICE_NAME_BUFFER_SIZE] = { '\0' };
     uint32_t numLinks;
     nvmlEnableState_t nvlinkActives[NVML_NVLINK_MAX_LINKS];
@@ -255,7 +256,6 @@ int NvidiaInfo::setup()
     // Get the device name
     nvRetValue = _nvmlDeviceGetName(handle, cDevicename, NVML_DEVICE_NAME_BUFFER_SIZE);
     CHECK_NVML(nvRetValue, nvmlDeviceGetName);
-    printf("\t%s", cDevicename);
 
     nvRetValue = _nvmlDeviceGetBrand(handle, &brandType);
     //CHECK_NVML(nvRetValue, nvmlDeviceGetBrand);
@@ -265,25 +265,47 @@ int NvidiaInfo::setup()
     switch (brandType)
     {
         ENTRY(NVML_BRAND_UNKNOWN, "UNKNOWN");
-        ENTRY(NVML_BRAND_QUADRO, "QUADRO");
-        ENTRY(NVML_BRAND_TESLA, "TESLA");
+        ENTRY(NVML_BRAND_QUADRO, "Quadro");
+        ENTRY(NVML_BRAND_TESLA, "Tesla");
         ENTRY(NVML_BRAND_NVS, "NVS");
         ENTRY(NVML_BRAND_GRID, "GRID");
-        ENTRY(NVML_BRAND_GEFORCE, "GEFORCE");
-        ENTRY(NVML_BRAND_TITAN, "TITAN");
-        ENTRY(NVML_BRAND_NVIDIA_VAPPS, "Virtual Applications");
-        ENTRY(NVML_BRAND_NVIDIA_VPC, "Virtual PC");
-        ENTRY(NVML_BRAND_NVIDIA_VCS, "Virtual Compute Server");
-        ENTRY(NVML_BRAND_NVIDIA_VWS, "RTX Virtual Workstation");
+        ENTRY(NVML_BRAND_GEFORCE, "Geforce");
+        ENTRY(NVML_BRAND_TITAN, "Titan");
+        ENTRY(NVML_BRAND_NVIDIA_VAPPS, "vApps");
+        ENTRY(NVML_BRAND_NVIDIA_VPC, "vPC");
+        ENTRY(NVML_BRAND_NVIDIA_VCS, "vCS");
+        ENTRY(NVML_BRAND_NVIDIA_VWS, "vWS");
         ENTRY(NVML_BRAND_NVIDIA_CLOUD_GAMING, "Cloud Gaming");
-        ENTRY(NVML_BRAND_QUADRO_RTX, "QUADRO RTX");
-        ENTRY(NVML_BRAND_NVIDIA_RTX, "NVIDIA RTX");
+        ENTRY(NVML_BRAND_QUADRO_RTX, "Quadro");
+        ENTRY(NVML_BRAND_NVIDIA_RTX, "NVIDIA");
         ENTRY(NVML_BRAND_NVIDIA, "NVIDIA");
-        ENTRY(NVML_BRAND_GEFORCE_RTX, "GEFORCE RTX");
-        ENTRY(NVML_BRAND_TITAN_RTX, "TITAN RTX");
+        ENTRY(NVML_BRAND_GEFORCE_RTX, "Geforce RTX");
+        ENTRY(NVML_BRAND_TITAN_RTX, "Titan RTX");
     }
+#undef ENTRY
 
-    printf("\t%s\n", brandName);
+    nvRetValue = _nvmlDeviceGetArchitecture(handle, &deviceArch);
+    char* archName = "";
+#define ENTRY(type, desc) case type: archName = desc; break;
+    switch (deviceArch)
+    {
+        ENTRY(NVML_DEVICE_ARCH_KEPLER, "Kepler");
+        ENTRY(NVML_DEVICE_ARCH_MAXWELL, "Maxwell");
+        ENTRY(NVML_DEVICE_ARCH_PASCAL, "Pascal");
+        ENTRY(NVML_DEVICE_ARCH_VOLTA, "Volta");
+        ENTRY(NVML_DEVICE_ARCH_TURING, "Turing");
+        ENTRY(NVML_DEVICE_ARCH_AMPERE, "Ampere");
+        ENTRY(NVML_DEVICE_ARCH_ADA, "Ada");
+        ENTRY(NVML_DEVICE_ARCH_HOPPER, "Hopper");
+    }
+#undef ENTRY
+
+
+    printf("\t%s", archName);
+    printf("\t%s", brandName);
+    printf("\t%s", cDevicename);
+
+    printf("\n");
 
     return 0;
 }
@@ -606,7 +628,7 @@ int nvidia_setup()
 
     bool bNVLinkSupported = false;
 
-    printf("GPU\tMODE\tCORES\tBUS\tPCIe\tGB/s\tNAME\tBRAND\n");
+    printf("GPU\tMODE\tCORES\tBUS\tPCIe\tGB/s\tARCH\tBRAND\tNAME\n");
 
     NvidiaInfos.resize(uiNumGPUs);
 

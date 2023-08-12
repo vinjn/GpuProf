@@ -7,6 +7,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	// "gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvpci/nvpci_test"
 )
 
 func main() {
